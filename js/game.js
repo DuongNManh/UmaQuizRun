@@ -2,9 +2,10 @@
 const config = {
     canvas: null,
     ctx: null,
-    width: 1600,
-    height: 900,
-    groundY: 700,
+    width: 1850,
+    height: 1000,
+    scale: 1,
+    groundY: 800,
     gameState: 'loading' // loading, characterSelect, playing
 };
 
@@ -20,7 +21,6 @@ const CHARACTERS = [
     { id: 'oguri', name: 'Oguri Cap', folder: 'Oguri', prefix: 'oguri' },
     { id: 'rudolf', name: 'Symboli Rudolf', folder: 'Rudolf', prefix: 'rudolf' },
     { id: 'spe', name: 'Special Week', folder: 'Spe', prefix: 'spe' },
-    { id: 'still', name: 'Still In Love', folder: 'Still', prefix: 'still' },
     { id: 'sunday', name: 'Marvelous Sunday', folder: 'Sunday', prefix: 'sunday' },
     { id: 'suzuka', name: 'Silence Suzuka', folder: 'Suzuka', prefix: 'suzuka' },
     { id: 'tachyon', name: 'Agnes Tachyon', folder: 'Tachyon', prefix: 'tachyon' },
@@ -31,6 +31,9 @@ const CHARACTERS = [
 // Animation types
 const ANIMATION_TYPES = ['run', 'boost', 'idle', 'win'];
 
+// Smoke effect configuration
+const SMOKE_FRAME_COUNT = 6;
+
 // Assets to load
 const assets = {
     backgrounds: {
@@ -40,7 +43,7 @@ const assets = {
     },
     characters: {},
     effects: {
-        smoke: []
+        smoke: null
     },
     loaded: 0,
     total: 0
@@ -60,14 +63,17 @@ CHARACTERS.forEach(char => {
 // Character sprite configuration
 const characterConfig = {
     currentCharacter: 'spe', // Default character
-    x: 150,
+    x: 500,
     y: 750,
     scale: 2,
     currentAnimation: 'run',
     frameIndex: 0,
     frameCount: 0,
     frameDelay: 10,
-    frameCounter: 0
+    frameCounter: 0,
+    smokeFrameIndex: 0,
+    smokeFrameDelay: 10,
+    smokeFrameCounter: 0
 };
 
 // Background scrolling
@@ -77,6 +83,11 @@ const background = {
     speed: 5
 };
 
+// Obstacles (fences)
+let obstacles = [];
+const OBSTACLE_SPAWN_INTERVAL = 5000; // 15 seconds in milliseconds
+let lastObstacleSpawn = 0;
+
 // Load all assets dynamically
 function loadAssets() {
     const imagesToLoad = [
@@ -85,13 +96,8 @@ function loadAssets() {
         { key: 'bg2', path: 'assets/background/bg-2.png', category: 'backgrounds' },
         { key: 'fence', path: 'assets/background/fence_00.png', category: 'backgrounds' },
 
-        // Run smoke effects
-        { key: 0, path: 'assets/characters/run/runsmoke1_1.png', category: 'effects', effect: 'smoke' },
-        { key: 1, path: 'assets/characters/run/runsmoke1_2.png', category: 'effects', effect: 'smoke' },
-        { key: 2, path: 'assets/characters/run/runsmoke1_3.png', category: 'effects', effect: 'smoke' },
-        { key: 3, path: 'assets/characters/run/runsmoke1_4.png', category: 'effects', effect: 'smoke' },
-        { key: 4, path: 'assets/characters/run/runsmoke1_5.png', category: 'effects', effect: 'smoke' },
-        { key: 5, path: 'assets/characters/run/runsmoke1_6.png', category: 'effects', effect: 'smoke' }
+        // Run smoke effects (sprite sheet)
+        { key: 'sheet', path: 'assets/run/run_smoke_sheet.png', category: 'effects', effect: 'smoke' }
     ];
 
     // Dynamically add all characters
@@ -144,7 +150,7 @@ function loadAssets() {
             assets.characters[imageInfo.character][imageInfo.key] = img;
         } else if (imageInfo.category === 'effects') {
             if (imageInfo.effect === 'smoke') {
-                assets.effects.smoke[imageInfo.key] = img;
+                assets.effects.smoke = img;
             }
         }
     });
@@ -229,6 +235,29 @@ function drawCharacter() {
             characterConfig.x, characterConfig.y,
             frameWidth * characterConfig.scale, frameHeight * characterConfig.scale
         );
+
+        // Draw smoke effect under character's feet if running or boosting
+        if ((anim === 'run' || anim === 'boost') && assets.effects.smoke) {
+            const smokeSprite = assets.effects.smoke;
+            if (smokeSprite && smokeSprite.complete) {
+                const smokeFrameWidth = smokeSprite.width / SMOKE_FRAME_COUNT;
+                const smokeFrameHeight = smokeSprite.height;
+                const smokeX = characterConfig.x + (frameWidth * characterConfig.scale) - smokeFrameWidth;
+                const smokeY = characterConfig.y + frameHeight * characterConfig.scale - smokeFrameHeight;
+                config.ctx.drawImage(
+                    smokeSprite,
+                    characterConfig.smokeFrameIndex * smokeFrameWidth, 0, smokeFrameWidth, smokeFrameHeight,
+                    smokeX, smokeY, smokeFrameWidth, smokeFrameHeight
+                );
+            }
+
+            // Update smoke frame animation
+            characterConfig.smokeFrameCounter++;
+            if (characterConfig.smokeFrameCounter >= characterConfig.smokeFrameDelay) {
+                characterConfig.smokeFrameCounter = 0;
+                characterConfig.smokeFrameIndex = (characterConfig.smokeFrameIndex + 1) % SMOKE_FRAME_COUNT;
+            }
+        }
     }
 }
 
@@ -261,12 +290,55 @@ function drawUI() {
     config.ctx.fillText(`Animation: ${characterConfig.currentAnimation}`, config.width - 300, 60);
 }
 
+// Spawn a new obstacle (fence)
+function spawnObstacle() {
+    if (assets.backgrounds.fence) {
+        obstacles.push({
+            x: config.width,
+            y: config.groundY + (assets.backgrounds.fence.height / 2),
+            speed: background.speed + 2
+        });
+    }
+}
+
+// Update obstacles
+function updateObstacles() {
+    const currentTime = Date.now();
+    if (currentTime - lastObstacleSpawn > OBSTACLE_SPAWN_INTERVAL) {
+        spawnObstacle();
+        lastObstacleSpawn = currentTime;
+    }
+
+    // Move obstacles
+    obstacles.forEach(obstacle => {
+        obstacle.x -= obstacle.speed;
+
+        // Trigger jump if obstacle is near character
+        if (obstacle.x < characterConfig.x + 200 && obstacle.x > characterConfig.x - 50 && characterConfig.currentAnimation !== 'boost') {
+            characterConfig.currentAnimation = 'boost';
+            characterConfig.frameIndex = 0;
+        }
+    });
+
+    // Remove off-screen obstacles
+    obstacles = obstacles.filter(obstacle => obstacle.x > -assets.backgrounds.fence.width);
+}
+
+// Draw obstacles
+function drawObstacles() {
+    if (assets.backgrounds.fence) {
+        obstacles.forEach(obstacle => {
+            config.ctx.drawImage(assets.backgrounds.fence, obstacle.x, obstacle.y);
+        });
+    }
+}
+
 // Character Selection Screen
 const characterSelection = {
     selectedIndex: 0,
-    gridColumns: 5,
+    gridColumns: 6,
     cardWidth: 200,
-    cardHeight: 280,
+    cardHeight: 200,
     padding: 20
 };
 
@@ -387,8 +459,12 @@ function gameLoop() {
     // Clear canvas
     config.ctx.clearRect(0, 0, config.width, config.height);
 
+    // Update game state
+    updateObstacles();
+
     // Draw everything
     drawBackground();
+    drawObstacles();
     drawCharacter();
     drawUI();
 
@@ -433,6 +509,7 @@ function setupControls() {
 // Start the game
 function startGame() {
     console.log('All assets loaded! Starting game...');
+    lastObstacleSpawn = Date.now();
     setupControls();
     gameLoop();
 }
@@ -442,6 +519,8 @@ function init() {
     config.canvas = document.getElementById('game');
     config.ctx = config.canvas.getContext('2d');
 
+    resizeCanvas();
+
     // Draw loading screen
     drawLoadingScreen();
 
@@ -449,5 +528,19 @@ function init() {
     loadAssets();
 }
 
+// Resize canvas to fit window
+function resizeCanvas() {
+    config.canvas.width = window.innerWidth;
+    config.canvas.height = window.innerHeight;
+    config.scale = Math.min(config.canvas.width / config.width, config.canvas.height / config.height);
+    config.ctx.scale(config.scale, config.scale);
+
+    // Center the game
+    const offsetX = (config.canvas.width / config.scale - config.width) / 2;
+    const offsetY = (config.canvas.height / config.scale - config.height) / 2;
+    config.ctx.translate(offsetX, offsetY);
+}
+
 // Start when page loads
 window.addEventListener('load', init);
+window.addEventListener('resize', resizeCanvas);
