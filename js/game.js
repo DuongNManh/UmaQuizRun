@@ -5,7 +5,7 @@ const config = {
     width: 1850,
     height: 1000,
     scale: 1,
-    groundY: 800,
+    groundY: 0, // Will be calculated
     gameState: 'loading' // loading, characterSelect, playing
 };
 
@@ -64,16 +64,21 @@ CHARACTERS.forEach(char => {
 const characterConfig = {
     currentCharacter: 'spe', // Default character
     x: 500,
-    y: 750,
-    scale: 2,
+    y: 0, // Will be calculated
+    scale: 2.5,
     currentAnimation: 'run',
     frameIndex: 0,
     frameCount: 0,
-    frameDelay: 10,
+    frameDelay: 15,
     frameCounter: 0,
     smokeFrameIndex: 0,
-    smokeFrameDelay: 10,
-    smokeFrameCounter: 0
+    smokeFrameDelay: 30,
+    smokeFrameCounter: 0,
+    isJumping: false,
+    jumpVelocity: 0,
+    jumpPower: -20, // Initial upward velocity
+    gravity: 0.8,
+    paused: false
 };
 
 // Background scrolling
@@ -85,7 +90,7 @@ const background = {
 
 // Obstacles (fences)
 let obstacles = [];
-const OBSTACLE_SPAWN_INTERVAL = 5000; // 15 seconds in milliseconds
+const OBSTACLE_SPAWN_INTERVAL = 4500; // 4.5 seconds in milliseconds
 let lastObstacleSpawn = 0;
 
 // Load all assets dynamically
@@ -128,7 +133,7 @@ function loadAssets() {
             assets.loaded++;
             if (assets.loaded === assets.total) {
                 // Calculate background x2 position after images are loaded
-                background.x2 = assets.backgrounds.bg1.width;
+                background.x2 = config.width;
                 config.gameState = 'characterSelect';
                 startCharacterSelection();
             }
@@ -187,13 +192,14 @@ function drawLoadingScreen() {
 // Draw scrolling background
 function drawBackground() {
     if (assets.backgrounds.bg1) {
-        // Draw two copies of background for seamless scrolling
+        // Draw first background (normal)
         config.ctx.drawImage(assets.backgrounds.bg1, background.x1, 0, config.width, config.height);
 
-        // Flip the second background horizontally
+        // Draw second background (flipped for seamless effect)
         config.ctx.save();
+        config.ctx.translate(background.x2 + config.width, 0);
         config.ctx.scale(-1, 1);
-        config.ctx.drawImage(assets.backgrounds.bg1, -background.x2 - config.width, 0, config.width, config.height);
+        config.ctx.drawImage(assets.backgrounds.bg1, 0, 0, config.width, config.height);
         config.ctx.restore();
 
         // Update positions
@@ -221,11 +227,13 @@ function drawCharacter() {
         const frameWidth = frameHeight; // Assuming square frames
         const frameCount = Math.floor(sprite.width / frameWidth);
 
-        // Update frame animation
-        characterConfig.frameCounter++;
-        if (characterConfig.frameCounter >= characterConfig.frameDelay) {
-            characterConfig.frameCounter = 0;
-            characterConfig.frameIndex = (characterConfig.frameIndex + 1) % frameCount;
+        // Update frame animation only if not paused
+        if (!characterConfig.paused) {
+            characterConfig.frameCounter++;
+            if (characterConfig.frameCounter >= characterConfig.frameDelay) {
+                characterConfig.frameCounter = 0;
+                characterConfig.frameIndex = (characterConfig.frameIndex + 1) % frameCount;
+            }
         }
 
         // Draw current frame
@@ -296,7 +304,7 @@ function spawnObstacle() {
         obstacles.push({
             x: config.width,
             y: config.groundY + (assets.backgrounds.fence.height / 2),
-            speed: background.speed + 2
+            speed: background.speed
         });
     }
 }
@@ -314,14 +322,34 @@ function updateObstacles() {
         obstacle.x -= obstacle.speed;
 
         // Trigger jump if obstacle is near character
-        if (obstacle.x < characterConfig.x + 200 && obstacle.x > characterConfig.x - 50 && characterConfig.currentAnimation !== 'boost') {
-            characterConfig.currentAnimation = 'boost';
-            characterConfig.frameIndex = 0;
+        if (obstacle.x < characterConfig.x + 200 && obstacle.x > characterConfig.x - 50 && !characterConfig.isJumping) {
+            characterConfig.isJumping = true;
+            characterConfig.jumpVelocity = characterConfig.jumpPower;
+            characterConfig.paused = true;
+            characterConfig.currentAnimation = 'run';
+            characterConfig.frameIndex = 3; // Pause on idle frame
         }
     });
 
     // Remove off-screen obstacles
     obstacles = obstacles.filter(obstacle => obstacle.x > -assets.backgrounds.fence.width);
+}
+
+// Update character (for jumping)
+function updateCharacter() {
+    if (characterConfig.isJumping) {
+        characterConfig.y += characterConfig.jumpVelocity;
+        characterConfig.jumpVelocity += characterConfig.gravity;
+
+        // Land on ground
+        if (characterConfig.y >= config.groundY) {
+            characterConfig.y = config.groundY;
+            characterConfig.isJumping = false;
+            characterConfig.paused = false;
+            characterConfig.currentAnimation = 'run';
+            characterConfig.frameIndex = 0;
+        }
+    }
 }
 
 // Draw obstacles
@@ -461,6 +489,7 @@ function gameLoop() {
 
     // Update game state
     updateObstacles();
+    updateCharacter();
 
     // Draw everything
     drawBackground();
@@ -539,6 +568,10 @@ function resizeCanvas() {
     const offsetX = (config.canvas.width / config.scale - config.width) / 2;
     const offsetY = (config.canvas.height / config.scale - config.height) / 2;
     config.ctx.translate(offsetX, offsetY);
+
+    // Update relative positions
+    config.groundY = config.height * 0.8;
+    characterConfig.y = config.groundY; // Reset to ground if not jumping
 }
 
 // Start when page loads
