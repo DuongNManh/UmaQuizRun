@@ -5,8 +5,8 @@ const config = {
     width: 1850,
     height: 1000,
     scale: 1,
-    groundY: 0, // Will be calculated
-    gameState: 'loading' // loading, characterSelect, playing
+    groundY: 0,
+    gameState: 'loading'
 };
 
 // Available characters with their metadata
@@ -64,19 +64,19 @@ CHARACTERS.forEach(char => {
 const characterConfig = {
     currentCharacter: 'spe', // Default character
     x: 500,
-    y: 0, // Will be calculated
+    y: 0,
     scale: 2.5,
     currentAnimation: 'run',
     frameIndex: 0,
     frameCount: 0,
-    frameDelay: 15,
+    frameDelay: 8,
     frameCounter: 0,
     smokeFrameIndex: 0,
-    smokeFrameDelay: 30,
+    smokeFrameDelay: 15,
     smokeFrameCounter: 0,
     isJumping: false,
-    jumpVelocity: 0,
-    jumpPower: -20, // Initial upward velocity
+    jumpVelocity: 100,
+    jumpPower: -20,
     gravity: 0.8,
     paused: false
 };
@@ -85,15 +85,45 @@ const characterConfig = {
 const background = {
     x1: 0,
     x2: 0,
-    speed: 5
+    speed: 8
 };
+
+
+const QUIZ_TRIGGER_DISTANCE = 1100; // Distance from character to trigger quiz
+
+// Quiz data
+let quizData = [];
+
+let currentQuestion = null;
+let quizTimer = 0;
+const QUIZ_TIME_LIMIT = 10000; // 10 seconds
+let isQuizActive = false;
+let quizStartTime = 0;
+let quizInput = '';
+let isGamePaused = false;
+let slowFactor = 1; // Normal speed
 
 // Obstacles (fences)
 let obstacles = [];
-const OBSTACLE_SPAWN_INTERVAL = 4500; // 4.5 seconds in milliseconds
-let lastObstacleSpawn = 0;
+const OBSTACLE_SPAWN_INTERVAL = 5000; // 5 seconds after quiz ends
+let lastQuizEnd = 0;
 
-// Load all assets dynamically
+// Load quiz data from JSON
+async function loadQuizData() {
+    try {
+        const response = await fetch('js/quizData.json');
+        if (!response.ok) {
+            throw new Error('Failed to load quiz data');
+        }
+        quizData = await response.json();
+        console.log('Quiz data loaded:', quizData);
+    } catch (error) {
+        console.error('Error loading quiz data:', error);
+        // Fallback to empty array or default
+        quizData = [];
+    }
+}
+// Load all assets
 function loadAssets() {
     const imagesToLoad = [
         // Backgrounds
@@ -132,7 +162,6 @@ function loadAssets() {
         img.onload = () => {
             assets.loaded++;
             if (assets.loaded === assets.total) {
-                // Calculate background x2 position after images are loaded
                 background.x2 = config.width;
                 config.gameState = 'characterSelect';
                 startCharacterSelection();
@@ -202,9 +231,10 @@ function drawBackground() {
         config.ctx.drawImage(assets.backgrounds.bg1, 0, 0, config.width, config.height);
         config.ctx.restore();
 
-        // Update positions
-        background.x1 -= background.speed;
-        background.x2 -= background.speed;
+        // Update positions with slow factor and delta time
+        const effectiveSpeed = background.speed * slowFactor * (deltaTime / FIXED_TIME_STEP);
+        background.x1 -= effectiveSpeed;
+        background.x2 -= effectiveSpeed;
 
         // Reset positions for infinite scroll
         if (background.x1 <= -config.width) {
@@ -229,8 +259,9 @@ function drawCharacter() {
 
         // Update frame animation only if not paused
         if (!characterConfig.paused) {
-            characterConfig.frameCounter++;
-            if (characterConfig.frameCounter >= characterConfig.frameDelay) {
+            const effectiveFrameDelay = characterConfig.frameDelay / slowFactor;
+            characterConfig.frameCounter += (deltaTime / FIXED_TIME_STEP);
+            if (characterConfig.frameCounter >= effectiveFrameDelay) {
                 characterConfig.frameCounter = 0;
                 characterConfig.frameIndex = (characterConfig.frameIndex + 1) % frameCount;
             }
@@ -260,8 +291,9 @@ function drawCharacter() {
             }
 
             // Update smoke frame animation
-            characterConfig.smokeFrameCounter++;
-            if (characterConfig.smokeFrameCounter >= characterConfig.smokeFrameDelay) {
+            const effectiveSmokeDelay = characterConfig.smokeFrameDelay / slowFactor;
+            characterConfig.smokeFrameCounter += (deltaTime / FIXED_TIME_STEP);
+            if (characterConfig.smokeFrameCounter >= effectiveSmokeDelay) {
                 characterConfig.smokeFrameCounter = 0;
                 characterConfig.smokeFrameIndex = (characterConfig.smokeFrameIndex + 1) % SMOKE_FRAME_COUNT;
             }
@@ -275,7 +307,7 @@ function drawUI() {
 
     // Character selector
     config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    config.ctx.fillRect(10, 10, 200, 120);
+    config.ctx.fillRect(10, 10, 200, 140);
 
     config.ctx.fillStyle = '#fff';
     config.ctx.font = '16px Arial';
@@ -286,6 +318,7 @@ function drawUI() {
     config.ctx.fillText('B - Boost Animation', 20, 75);
     config.ctx.fillText('I - Idle Animation', 20, 95);
     config.ctx.fillText('W - Win Animation', 20, 115);
+    config.ctx.fillText(`FPS: ${fps}`, 20, 135);
 
     // Current character info
     const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
@@ -304,7 +337,8 @@ function spawnObstacle() {
         obstacles.push({
             x: config.width,
             y: config.groundY + (assets.backgrounds.fence.height / 2),
-            speed: background.speed
+            speed: background.speed,
+            hasTriggeredQuiz: false
         });
     }
 }
@@ -312,22 +346,55 @@ function spawnObstacle() {
 // Update obstacles
 function updateObstacles() {
     const currentTime = Date.now();
-    if (currentTime - lastObstacleSpawn > OBSTACLE_SPAWN_INTERVAL) {
+    if (!isQuizActive && currentTime - lastQuizEnd > OBSTACLE_SPAWN_INTERVAL) {
         spawnObstacle();
-        lastObstacleSpawn = currentTime;
+        lastQuizEnd = currentTime;
     }
 
     // Move obstacles
     obstacles.forEach(obstacle => {
-        obstacle.x -= obstacle.speed;
+        obstacle.x -= obstacle.speed * slowFactor * (deltaTime / FIXED_TIME_STEP);
 
-        // Trigger jump if obstacle is near character
-        if (obstacle.x < characterConfig.x + 200 && obstacle.x > characterConfig.x - 50 && !characterConfig.isJumping) {
-            characterConfig.isJumping = true;
-            characterConfig.jumpVelocity = characterConfig.jumpPower;
-            characterConfig.paused = true;
-            characterConfig.currentAnimation = 'run';
-            characterConfig.frameIndex = 3; // Pause on idle frame
+        // Trigger quiz if obstacle is near character and not already jumping or quiz active
+        if (obstacle.x < characterConfig.x + QUIZ_TRIGGER_DISTANCE && obstacle.x > characterConfig.x + QUIZ_TRIGGER_DISTANCE - 100 && !characterConfig.isJumping && !isQuizActive && !obstacle.hasTriggeredQuiz) {
+            // Start quiz
+            currentQuestion = quizData[Math.floor(Math.random() * quizData.length)];
+            isQuizActive = true;
+            isGamePaused = true;
+            slowFactor = 0.2;
+            quizStartTime = currentTime;
+            quizTimer = QUIZ_TIME_LIMIT;
+            targetObstacle = obstacle; // Mark this as the target to jump
+            obstacle.hasTriggeredQuiz = true; // Mark as triggered to prevent re-triggering
+        }
+
+        // Jump when answered correctly and obstacle is close
+        if (hasAnsweredCorrectly && targetObstacle === obstacle && !characterConfig.isJumping) {
+            const jumpDistance = 250; // Distance at which to jump
+            if (obstacle.x < characterConfig.x + jumpDistance && obstacle.x > characterConfig.x - 50) {
+                characterConfig.isJumping = true;
+                characterConfig.jumpVelocity = characterConfig.jumpPower;
+                characterConfig.paused = true;
+                characterConfig.currentAnimation = 'run';
+                characterConfig.frameIndex = 3;
+                hasAnsweredCorrectly = false; // Reset flag
+                targetObstacle = null;
+            }
+        }
+
+        // Collision detection - if fence reaches character position without jumping -> Game Over
+        if (obstacle.x <= characterConfig.x + 100 && obstacle.x >= characterConfig.x - 50 && !characterConfig.isJumping) {
+            console.log('Collision! Game Over.');
+            config.gameState = 'characterSelect';
+            obstacles = [];
+            isQuizActive = false;
+            isGamePaused = false;
+            slowFactor = 1;
+            currentQuestion = null;
+            quizInput = '';
+            hasAnsweredCorrectly = false;
+            targetObstacle = null;
+            characterSelectionLoop();
         }
     });
 
@@ -338,8 +405,9 @@ function updateObstacles() {
 // Update character (for jumping)
 function updateCharacter() {
     if (characterConfig.isJumping) {
-        characterConfig.y += characterConfig.jumpVelocity;
-        characterConfig.jumpVelocity += characterConfig.gravity;
+        const dt = deltaTime / FIXED_TIME_STEP;
+        characterConfig.y += characterConfig.jumpVelocity * dt;
+        characterConfig.jumpVelocity += characterConfig.gravity * dt;
 
         // Land on ground
         if (characterConfig.y >= config.groundY) {
@@ -349,6 +417,100 @@ function updateCharacter() {
             characterConfig.currentAnimation = 'run';
             characterConfig.frameIndex = 0;
         }
+    }
+}
+
+// Update quiz timer
+function updateQuiz() {
+    if (isQuizActive) {
+        const currentTime = Date.now();
+        quizTimer = QUIZ_TIME_LIMIT - (currentTime - quizStartTime);
+        if (quizTimer <= 0) {
+            // Time out, game over
+            console.log('Quiz timeout! Game Over.');
+            // Reset to character selection or end game
+            config.gameState = 'characterSelect';
+            obstacles = []; // Clear obstacles
+            characterSelectionLoop();
+            isQuizActive = false;
+            isGamePaused = false;
+            slowFactor = 1;
+            currentQuestion = null;
+            quizInput = '';
+            hasAnsweredCorrectly = false;
+            targetObstacle = null;
+            lastQuizEnd = currentTime;
+        }
+    }
+}
+
+// Draw quiz UI
+function drawQuiz() {
+    if (!currentQuestion) return;
+
+    // Semi-transparent overlay
+    config.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    config.ctx.fillRect(0, 0, config.width, config.height);
+
+    // Quiz box
+    const boxWidth = 600;
+    const boxHeight = 400;
+    const boxX = (config.width - boxWidth) / 2;
+    const boxY = (config.height - boxHeight) / 2;
+
+    config.ctx.fillStyle = '#fff';
+    config.ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+    config.ctx.strokeStyle = '#000';
+    config.ctx.lineWidth = 4;
+    config.ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+
+    // Question
+    config.ctx.fillStyle = '#000';
+    config.ctx.font = 'bold 24px Arial';
+    config.ctx.textAlign = 'center';
+    config.ctx.fillText(currentQuestion.question, config.width / 2, boxY + 50);
+
+    if (currentQuestion.type === 'multiple_choice') {
+        // Draw buttons for options
+        config.ctx.font = '20px Arial';
+        currentQuestion.options.forEach((option, index) => {
+            const buttonY = boxY + 100 + index * 50;
+            const buttonHeight = 40;
+            const buttonX = boxX + 50;
+            const buttonWidth = boxWidth - 100;
+
+            // Button background
+            config.ctx.fillStyle = '#4CAF50';
+            config.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+            config.ctx.strokeStyle = '#000';
+            config.ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+
+            // Button text
+            config.ctx.fillStyle = '#fff';
+            config.ctx.textAlign = 'center';
+            config.ctx.fillText(option, buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 7);
+        });
+    } else if (currentQuestion.type === 'text_input') {
+        // Options (not used)
+        // Input display
+        config.ctx.fillStyle = '#000';
+        config.ctx.font = '20px Arial';
+        config.ctx.fillText(`Your answer: ${quizInput}`, config.width / 2, boxY + boxHeight - 50);
+    }
+
+    // Timer
+    const timeLeft = Math.ceil(quizTimer / 1000);
+    config.ctx.fillStyle = timeLeft <= 5 ? '#ff0000' : '#000';
+    config.ctx.font = 'bold 30px Arial';
+    config.ctx.fillText(`Time: ${timeLeft}s`, config.width / 2, boxY + boxHeight - 80);
+
+    // Instructions
+    config.ctx.font = '16px Arial';
+    config.ctx.fillStyle = '#000';
+    if (currentQuestion.type === 'multiple_choice') {
+        config.ctx.fillText('Click on the correct answer', config.width / 2, boxY + boxHeight - 20);
+    } else {
+        config.ctx.fillText('Type the correct answer and press Enter', config.width / 2, boxY + boxHeight - 20);
     }
 }
 
@@ -483,54 +645,163 @@ function characterSelectionLoop() {
 }
 
 // Main game loop
-function gameLoop() {
-    // Clear canvas
-    config.ctx.clearRect(0, 0, config.width, config.height);
+let lastFrameTime = 0;
+let deltaTime = 0;
+const TARGET_FPS = 60;
+const FIXED_TIME_STEP = 1000 / TARGET_FPS; // 16.67ms
+let fps = 0;
+let frameCount = 0;
+let lastFpsUpdate = 0;
+let hasAnsweredCorrectly = false; // Flag for correct answer
+let targetObstacle = null; // The obstacle to jump over
 
-    // Update game state
+function gameLoop(currentTime = 0) {
+    // Calculate delta time
+    if (lastFrameTime === 0) {
+        lastFrameTime = currentTime;
+    }
+    deltaTime = currentTime - lastFrameTime;
+    lastFrameTime = currentTime;
+
+    // FPS counter
+    frameCount++;
+    if (currentTime - lastFpsUpdate >= 1000) {
+        fps = frameCount;
+        frameCount = 0;
+        lastFpsUpdate = currentTime;
+    }
+    config.ctx.clearRect(0, 0, config.width, config.height);
     updateObstacles();
-    updateCharacter();
+    if (!isGamePaused) {
+        updateCharacter();
+    }
+    updateQuiz();
 
     // Draw everything
     drawBackground();
     drawObstacles();
     drawCharacter();
     drawUI();
+    if (isQuizActive) {
+        drawQuiz();
+    }
 
     requestAnimationFrame(gameLoop);
 }
 
 // Handle keyboard input during gameplay
 function setupControls() {
+    // Click handler for quiz
+    config.canvas.addEventListener('click', (e) => {
+        if (!isQuizActive || currentQuestion.type !== 'multiple_choice') return;
+
+        const rect = config.canvas.getBoundingClientRect();
+        const scaleX = config.canvas.width / rect.width;
+        const scaleY = config.canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX / config.scale;
+        const y = (e.clientY - rect.top) * scaleY / config.scale;
+
+        // Adjust for translate
+        const offsetX = (config.canvas.width / config.scale - config.width) / 2;
+        const offsetY = (config.canvas.height / config.scale - config.height) / 2;
+        const adjustedX = x - offsetX;
+        const adjustedY = y - offsetY;
+
+        const boxWidth = 600;
+        const boxHeight = 400;
+        const boxX = (config.width - boxWidth) / 2;
+        const boxY = (config.height - boxHeight) / 2;
+
+        if (adjustedX >= boxX && adjustedX <= boxX + boxWidth && adjustedY >= boxY && adjustedY <= boxY + boxHeight) {
+            currentQuestion.options.forEach((option, index) => {
+                const buttonY = boxY + 100 + index * 50;
+                const buttonHeight = 40;
+                const buttonX = boxX + 50;
+                const buttonWidth = boxWidth - 100;
+
+                if (adjustedX >= buttonX && adjustedX <= buttonX + buttonWidth && adjustedY >= buttonY && adjustedY <= buttonY + buttonHeight) {
+                    // Check answer
+                    if (option === currentQuestion.correct) {
+                        // Correct answer - set flag to jump later when close to obstacle
+                        hasAnsweredCorrectly = true;
+                    } else {
+                        // Wrong answer - game over
+                        console.log('Wrong answer! Game Over.');
+                        config.gameState = 'characterSelect';
+                        obstacles = [];
+                        characterSelectionLoop();
+                    }
+                    // Reset quiz
+                    isQuizActive = false;
+                    isGamePaused = false;
+                    slowFactor = 1; // Reset speed
+                    currentQuestion = null;
+                    quizInput = '';
+                    lastQuizEnd = Date.now();
+                }
+            });
+        }
+    });
+
     document.addEventListener('keydown', (e) => {
         if (config.gameState !== 'playing') return;
 
-        switch (e.key) {
-            case 'r':
-            case 'R':
-                characterConfig.currentAnimation = 'run';
-                characterConfig.frameIndex = 0;
-                break;
-            case 'b':
-            case 'B':
-                characterConfig.currentAnimation = 'boost';
-                characterConfig.frameIndex = 0;
-                break;
-            case 'i':
-            case 'I':
-                characterConfig.currentAnimation = 'idle';
-                characterConfig.frameIndex = 0;
-                break;
-            case 'w':
-            case 'W':
-                characterConfig.currentAnimation = 'win';
-                characterConfig.frameIndex = 0;
-                break;
-            case 'Escape':
-                // Return to character selection
-                config.gameState = 'characterSelect';
-                characterSelectionLoop();
-                break;
+        if (isQuizActive && currentQuestion.type === 'text_input') {
+            // Handle quiz input for text_input
+            if (e.key === 'Enter') {
+                // Check answer
+                if (quizInput.trim().toLowerCase() === currentQuestion.correct.toLowerCase()) {
+                    // Correct answer - set flag to jump later when close to obstacle
+                    hasAnsweredCorrectly = true;
+                } else {
+                    // Wrong answer - game over
+                    console.log('Wrong answer! Game Over.');
+                    config.gameState = 'characterSelect';
+                    obstacles = [];
+                    characterSelectionLoop();
+                }
+                // Reset quiz
+                isQuizActive = false;
+                isGamePaused = false;
+                slowFactor = 1; // Reset speed
+                currentQuestion = null;
+                quizInput = '';
+                lastQuizEnd = Date.now();
+            } else if (e.key === 'Backspace') {
+                quizInput = quizInput.slice(0, -1);
+            } else if (e.key.length === 1) {
+                quizInput += e.key;
+            }
+            e.preventDefault();
+        } else if (!isQuizActive) {
+            // Normal controls
+            switch (e.key) {
+                case 'r':
+                case 'R':
+                    characterConfig.currentAnimation = 'run';
+                    characterConfig.frameIndex = 0;
+                    break;
+                case 'b':
+                case 'B':
+                    characterConfig.currentAnimation = 'boost';
+                    characterConfig.frameIndex = 0;
+                    break;
+                case 'i':
+                case 'I':
+                    characterConfig.currentAnimation = 'idle';
+                    characterConfig.frameIndex = 0;
+                    break;
+                case 'w':
+                case 'W':
+                    characterConfig.currentAnimation = 'win';
+                    characterConfig.frameIndex = 0;
+                    break;
+                case 'Escape':
+                    // Return to character selection
+                    config.gameState = 'characterSelect';
+                    characterSelectionLoop();
+                    break;
+            }
         }
     });
 }
@@ -538,13 +809,14 @@ function setupControls() {
 // Start the game
 function startGame() {
     console.log('All assets loaded! Starting game...');
-    lastObstacleSpawn = Date.now();
+    spawnObstacle(); // Spawn first fence immediately
+    lastQuizEnd = Date.now();
     setupControls();
     gameLoop();
 }
 
 // Initialize the game
-function init() {
+async function init() {
     config.canvas = document.getElementById('game');
     config.ctx = config.canvas.getContext('2d');
 
@@ -552,6 +824,9 @@ function init() {
 
     // Draw loading screen
     drawLoadingScreen();
+
+    // Load quiz data first
+    await loadQuizData();
 
     // Load all assets
     loadAssets();
