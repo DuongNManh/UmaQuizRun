@@ -11,21 +11,21 @@ const config = {
 
 // Available characters with their metadata
 const CHARACTERS = [
-    { id: 'cb', name: 'MR.C.B', folder: 'CB', prefix: 'cb' },
-    { id: 'daiwa', name: 'Daiwa Scarlet', folder: 'Daiwa', prefix: 'daiwa' },
-    { id: 'dia', name: 'Dia', folder: 'Dia', prefix: 'dia' },
-    { id: 'goldship', name: 'Gold Ship', folder: 'GoldShip', prefix: 'gs' },
-    { id: 'grass', name: 'Grass Wonder', folder: 'Grass', prefix: 'gw' },
-    { id: 'kitasan', name: 'Kitasan Black', folder: 'Kitasan', prefix: 'kita' },
-    { id: 'mcqueen', name: 'Mejiro McQueen', folder: 'McQueen', prefix: 'mq' },
-    { id: 'oguri', name: 'Oguri Cap', folder: 'Oguri', prefix: 'oguri' },
-    { id: 'rudolf', name: 'Symboli Rudolf', folder: 'Rudolf', prefix: 'rudolf' },
-    { id: 'spe', name: 'Special Week', folder: 'Spe', prefix: 'spe' },
-    { id: 'sunday', name: 'Marvelous Sunday', folder: 'Sunday', prefix: 'sunday' },
-    { id: 'suzuka', name: 'Silence Suzuka', folder: 'Suzuka', prefix: 'suzuka' },
-    { id: 'tachyon', name: 'Agnes Tachyon', folder: 'Tachyon', prefix: 'tachyon' },
-    { id: 'teio', name: 'Tokai Teio', folder: 'Teio', prefix: 'teio' },
-    { id: 'vodka', name: 'Vodka', folder: 'Vodka', prefix: 'vodka' },
+    // { id: 'cb', name: 'MR.C.B', folder: 'CB', prefix: 'cb' }, // kho
+    { id: 'daiwa', name: 'Daiwa Scarlet', folder: 'Daiwa', prefix: 'daiwa' }, // roi
+    // { id: 'dia', name: 'Dia', folder: 'Dia', prefix: 'dia' }, // kho
+    { id: 'goldship', name: 'Gold Ship', folder: 'GoldShip', prefix: 'gs' }, // roi
+    { id: 'grass', name: 'Grass Wonder', folder: 'Grass', prefix: 'gw' }, // roi
+    { id: 'kitasan', name: 'Kitasan Black', folder: 'Kitasan', prefix: 'kita' }, // roi
+    { id: 'mcqueen', name: 'Mejiro McQueen', folder: 'McQueen', prefix: 'mq' }, // roi
+    { id: 'oguri', name: 'Oguri Cap', folder: 'Oguri', prefix: 'oguri' }, // roi
+    // { id: 'rudolf', name: 'Symboli Rudolf', folder: 'Rudolf', prefix: 'rudolf' }, // kho
+    { id: 'spe', name: 'Special Week', folder: 'Spe', prefix: 'spe' }, // roi
+    // { id: 'sunday', name: 'Marvelous Sunday', folder: 'Sunday', prefix: 'sunday' }, // kho
+    { id: 'suzuka', name: 'Silence Suzuka', folder: 'Suzuka', prefix: 'suzuka' }, // roi
+    { id: 'tachyon', name: 'Agnes Tachyon', folder: 'Tachyon', prefix: 'tachyon' }, // roi
+    { id: 'teio', name: 'Tokai Teio', folder: 'Teio', prefix: 'teio' }, // roi
+    { id: 'vodka', name: 'Vodka', folder: 'Vodka', prefix: 'vodka' }, // roi
 ];
 
 // Animation types
@@ -107,6 +107,10 @@ let slowFactor = 1; // Normal speed
 let obstacles = [];
 const OBSTACLE_SPAWN_INTERVAL = 5000; // 5 seconds after quiz ends
 let lastQuizEnd = 0;
+
+// Scoring system
+let currentScore = 0;
+let highScore = localStorage.getItem('gameHighScore') ? parseInt(localStorage.getItem('gameHighScore')) : 0;
 
 // Load quiz data from JSON
 async function loadQuizData() {
@@ -305,20 +309,23 @@ function drawCharacter() {
 function drawUI() {
     if (config.gameState !== 'playing') return;
 
-    // Character selector
+    // Score display
     config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-    config.ctx.fillRect(10, 10, 200, 140);
+    config.ctx.fillRect(10, 10, 250, 120);
+
+    config.ctx.fillStyle = '#fff';
+    config.ctx.font = 'bold 24px Arial';
+    config.ctx.textAlign = 'left';
+    config.ctx.fillText('SCORE', 20, 40);
+
+    config.ctx.fillStyle = '#58cc02';
+    config.ctx.font = 'bold 28px Arial';
+    config.ctx.fillText(`${currentScore}`, 20, 70);
 
     config.ctx.fillStyle = '#fff';
     config.ctx.font = '16px Arial';
-    config.ctx.textAlign = 'left';
-    config.ctx.fillText('Controls:', 20, 30);
-    config.ctx.font = '14px Arial';
-    config.ctx.fillText('R - Run Animation', 20, 55);
-    config.ctx.fillText('B - Boost Animation', 20, 75);
-    config.ctx.fillText('I - Idle Animation', 20, 95);
-    config.ctx.fillText('W - Win Animation', 20, 115);
-    config.ctx.fillText(`FPS: ${fps}`, 20, 135);
+    config.ctx.fillText(`High Score: ${highScore}`, 20, 95);
+    config.ctx.fillText(`FPS: ${fps}`, 20, 115);
 
     // Current character info
     const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
@@ -377,6 +384,14 @@ function updateObstacles() {
                 characterConfig.paused = true;
                 characterConfig.currentAnimation = 'run';
                 characterConfig.frameIndex = 3;
+
+                // Play jump sound effect
+                const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
+                if (currentChar) {
+                    const jumpSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-jump.ogg`;
+                    AudioManager.playSoundEffect(jumpSoundPath, 0.7);
+                }
+
                 hasAnsweredCorrectly = false; // Reset flag
                 targetObstacle = null;
             }
@@ -385,7 +400,15 @@ function updateObstacles() {
         // Collision detection - if fence reaches character position without jumping -> Game Over
         if (obstacle.x <= characterConfig.x + 100 && obstacle.x >= characterConfig.x - 50 && !characterConfig.isJumping) {
             console.log('Collision! Game Over.');
-            config.gameState = 'characterSelect';
+
+            // Play fail sound effect
+            const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
+            if (currentChar) {
+                const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
+                AudioManager.playSoundEffect(failSoundPath, 0.7);
+            }
+
+            config.gameState = 'gameOver';
             obstacles = [];
             isQuizActive = false;
             isGamePaused = false;
@@ -394,7 +417,6 @@ function updateObstacles() {
             quizInput = '';
             hasAnsweredCorrectly = false;
             targetObstacle = null;
-            characterSelectionLoop();
         }
     });
 
@@ -428,10 +450,17 @@ function updateQuiz() {
         if (quizTimer <= 0) {
             // Time out, game over
             console.log('Quiz timeout! Game Over.');
-            // Reset to character selection or end game
-            config.gameState = 'characterSelect';
+
+            // Play fail sound effect
+            const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
+            if (currentChar) {
+                const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
+                AudioManager.playSoundEffect(failSoundPath, 0.7);
+            }
+
+            // Game over due to timeout
+            config.gameState = 'gameOver';
             obstacles = []; // Clear obstacles
-            characterSelectionLoop();
             isQuizActive = false;
             isGamePaused = false;
             slowFactor = 1;
@@ -448,69 +477,106 @@ function updateQuiz() {
 function drawQuiz() {
     if (!currentQuestion) return;
 
-    // Semi-transparent overlay
-    config.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    // Semi-transparent overlay with Duolingo green
+    config.ctx.fillStyle = 'rgba(0, 8, 2, 0.81)';
     config.ctx.fillRect(0, 0, config.width, config.height);
 
-    // Quiz box
-    const boxWidth = 600;
-    const boxHeight = 400;
+    // Quiz box - Duolingo style (rounded rectangle)
+    const boxWidth = 1000;
+    const boxHeight = 600;
     const boxX = (config.width - boxWidth) / 2;
     const boxY = (config.height - boxHeight) / 2;
 
+    // Draw rounded rectangle background
     config.ctx.fillStyle = '#fff';
-    config.ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-    config.ctx.strokeStyle = '#000';
-    config.ctx.lineWidth = 4;
-    config.ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+    config.ctx.beginPath();
+    config.ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 20);
+    config.ctx.fill();
 
-    // Question
-    config.ctx.fillStyle = '#000';
-    config.ctx.font = 'bold 24px Arial';
+    // Border
+    config.ctx.strokeStyle = '#00000093';
+    config.ctx.lineWidth = 4;
+    config.ctx.stroke();
+
+    // Question text with Duolingo styling
+    config.ctx.fillStyle = '#2d3748';
+    config.ctx.font = 'bold 28px Arial';
     config.ctx.textAlign = 'center';
-    config.ctx.fillText(currentQuestion.question, config.width / 2, boxY + 50);
+    config.ctx.fillText(currentQuestion.question, config.width / 2, boxY + 80);
 
     if (currentQuestion.type === 'multiple_choice') {
-        // Draw buttons for options
-        config.ctx.font = '20px Arial';
-        currentQuestion.options.forEach((option, index) => {
-            const buttonY = boxY + 100 + index * 50;
-            const buttonHeight = 40;
-            const buttonX = boxX + 50;
-            const buttonWidth = boxWidth - 100;
+        // Draw Duolingo-style option buttons in 2x2 grid
+        const buttonColors = ['#58cc02', '#ff9600', '#ff4b4b', '#1cb0f6'];
+        const buttonWidth = 320;
+        const buttonHeight = 100;
+        const buttonSpacing = 20;
+        const startX = boxX + (boxWidth - 2 * buttonWidth - buttonSpacing) / 2;
+        const startY = boxY + 150;
 
-            // Button background
-            config.ctx.fillStyle = '#4CAF50';
-            config.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
-            config.ctx.strokeStyle = '#000';
-            config.ctx.strokeRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        currentQuestion.options.forEach((option, index) => {
+            const col = index % 2;
+            const row = Math.floor(index / 2);
+            const buttonX = startX + col * (buttonWidth + buttonSpacing);
+            const buttonY = startY + row * (buttonHeight + buttonSpacing);
+
+            // Button background with rounded corners
+            config.ctx.fillStyle = buttonColors[index % buttonColors.length];
+            config.ctx.beginPath();
+            config.ctx.roundRect(buttonX, buttonY, buttonWidth, buttonHeight, 15);
+            config.ctx.fill();
+
+            // Button border
+            config.ctx.strokeStyle = '#fff';
+            config.ctx.lineWidth = 2;
+            config.ctx.stroke();
 
             // Button text
             config.ctx.fillStyle = '#fff';
+            config.ctx.font = 'bold 20px Arial';
             config.ctx.textAlign = 'center';
             config.ctx.fillText(option, buttonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 7);
         });
     } else if (currentQuestion.type === 'text_input') {
-        // Options (not used)
-        // Input display
-        config.ctx.fillStyle = '#000';
-        config.ctx.font = '20px Arial';
-        config.ctx.fillText(`Your answer: ${quizInput}`, config.width / 2, boxY + boxHeight - 50);
+        // Input box with Duolingo styling
+        const inputBoxWidth = 400;
+        const inputBoxHeight = 60;
+        const inputBoxX = (config.width - inputBoxWidth) / 2;
+        const inputBoxY = boxY + 200;
+
+        // Input box background
+        config.ctx.fillStyle = '#f7fafc';
+        config.ctx.beginPath();
+        config.ctx.roundRect(inputBoxX, inputBoxY, inputBoxWidth, inputBoxHeight, 10);
+        config.ctx.fill();
+
+        // Input box border (highlight if focused)
+        config.ctx.strokeStyle = '#cbd5e0';
+        config.ctx.lineWidth = 2;
+        config.ctx.stroke();
+
+        // Input text
+        config.ctx.fillStyle = '#2d3748';
+        config.ctx.font = 'bold 24px Arial';
+        config.ctx.textAlign = 'center';
+        const displayText = quizInput || 'Click here to type...';
+        config.ctx.fillStyle = quizInput ? '#2d3748' : '#9ca3af';
+        config.ctx.fillText(displayText, inputBoxX + inputBoxWidth / 2, inputBoxY + inputBoxHeight / 2 + 8);
     }
 
-    // Timer
+    // Timer with Duolingo styling
     const timeLeft = Math.ceil(quizTimer / 1000);
-    config.ctx.fillStyle = timeLeft <= 5 ? '#ff0000' : '#000';
-    config.ctx.font = 'bold 30px Arial';
-    config.ctx.fillText(`Time: ${timeLeft}s`, config.width / 2, boxY + boxHeight - 80);
+    const timerColor = timeLeft <= 5 ? '#ff4b4b' : '#58cc02';
+    config.ctx.fillStyle = timerColor;
+    config.ctx.font = 'bold 36px Arial';
+    config.ctx.fillText(`⏱️ ${timeLeft}s`, config.width / 2, boxY + boxHeight - 100);
 
     // Instructions
-    config.ctx.font = '16px Arial';
-    config.ctx.fillStyle = '#000';
+    config.ctx.fillStyle = '#4a5568';
+    config.ctx.font = '18px Arial';
     if (currentQuestion.type === 'multiple_choice') {
-        config.ctx.fillText('Click on the correct answer', config.width / 2, boxY + boxHeight - 20);
+        config.ctx.fillText('Click on the correct answer', config.width / 2, boxY + boxHeight - 40);
     } else {
-        config.ctx.fillText('Type the correct answer and press Enter', config.width / 2, boxY + boxHeight - 20);
+        config.ctx.fillText('Type the correct answer and press Enter', config.width / 2, boxY + boxHeight - 40);
     }
 }
 
@@ -520,6 +586,173 @@ function drawObstacles() {
         obstacles.forEach(obstacle => {
             config.ctx.drawImage(assets.backgrounds.fence, obstacle.x, obstacle.y);
         });
+    }
+}
+
+// Draw game over screen
+function drawGameOverScreen() {
+    // Duolingo-style gradient background
+    const gradient = config.ctx.createLinearGradient(0, 0, config.width, config.height);
+    gradient.addColorStop(0, '#6E6565A6');
+    gradient.addColorStop(1, '#646464AD');
+    config.ctx.fillStyle = gradient;
+    config.ctx.fillRect(0, 0, config.width, config.height);
+
+    // Game Over popup box
+    const boxWidth = 600;
+    const boxHeight = 500;
+    const boxX = (config.width - boxWidth) / 2;
+    const boxY = (config.height - boxHeight) / 2;
+
+    // Box background
+    config.ctx.fillStyle = '#fff';
+    config.ctx.beginPath();
+    config.ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 25);
+    config.ctx.fill();
+
+    // Box border
+    config.ctx.strokeStyle = '#ff4b4b';
+    config.ctx.lineWidth = 4;
+    config.ctx.stroke();
+
+    // Game Over title
+    config.ctx.fillStyle = '#ff4b4b';
+    config.ctx.font = 'bold 48px Arial';
+    config.ctx.textAlign = 'center';
+    config.ctx.fillText('GAME OVER', config.width / 2, boxY + 80);
+
+    // Score section
+    config.ctx.fillStyle = '#2d3748';
+    config.ctx.font = 'bold 24px Arial';
+    config.ctx.fillText('Your Score', config.width / 2, boxY + 140);
+
+    config.ctx.fillStyle = '#58cc02';
+    config.ctx.font = 'bold 36px Arial';
+    config.ctx.fillText(`${currentScore}`, config.width / 2, boxY + 180);
+
+    // High score section
+    config.ctx.fillStyle = '#2d3748';
+    config.ctx.font = 'bold 20px Arial';
+    config.ctx.fillText('High Score', config.width / 2, boxY + 220);
+
+    const isNewHighScore = currentScore === highScore && currentScore > 0;
+    config.ctx.fillStyle = isNewHighScore ? '#ff9600' : '#4a5568';
+    config.ctx.font = isNewHighScore ? 'bold 28px Arial' : '24px Arial';
+    config.ctx.fillText(`${highScore}`, config.width / 2, boxY + 250);
+
+    if (isNewHighScore) {
+        config.ctx.fillStyle = '#ff9600';
+        config.ctx.font = 'bold 16px Arial';
+        config.ctx.fillText('🎉 NEW HIGH SCORE! 🎉', config.width / 2, boxY + 275);
+    }
+
+    // Buttons
+    const buttonWidth = 220;
+    const buttonHeight = 80;
+    const buttonSpacing = 30;
+    const startX = boxX + (boxWidth - 2 * buttonWidth - buttonSpacing) / 2;
+    const buttonY = boxY + boxHeight - 100;
+
+    // Play Again button
+    config.ctx.fillStyle = '#58cc02';
+    config.ctx.beginPath();
+    config.ctx.roundRect(startX, buttonY, buttonWidth, buttonHeight, 15);
+    config.ctx.fill();
+    config.ctx.strokeStyle = '#fff';
+    config.ctx.lineWidth = 2;
+    config.ctx.stroke();
+
+    config.ctx.fillStyle = '#fff';
+    config.ctx.font = 'bold 18px Arial';
+    config.ctx.fillText('PLAY AGAIN', startX + buttonWidth / 2, buttonY + buttonHeight / 2 + 6);
+
+    // Character Select button
+    const selectButtonX = startX + buttonWidth + buttonSpacing;
+    config.ctx.fillStyle = '#6b7280';
+    config.ctx.beginPath();
+    config.ctx.roundRect(selectButtonX, buttonY, buttonWidth, buttonHeight, 15);
+    config.ctx.fill();
+    config.ctx.strokeStyle = '#fff';
+    config.ctx.lineWidth = 2;
+    config.ctx.stroke();
+
+    config.ctx.fillStyle = '#fff';
+    config.ctx.font = 'bold 18px Arial';
+    config.ctx.fillText('CHANGE CHARACTER', selectButtonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 6);
+}
+
+// Handle game over input
+function handleGameOverInput(e) {
+    if (config.gameState !== 'gameOver') return;
+
+    if (e.key === 'Enter' || e.key === ' ') {
+        // Play again with same character
+        restartGame();
+    } else if (e.key === 'Escape') {
+        // Go to character selection
+        config.gameState = 'characterSelect';
+        characterSelectionLoop();
+    }
+}
+
+// Handle game over clicks
+function handleGameOverClick(e) {
+    if (config.gameState !== 'gameOver') return;
+
+    const rect = config.canvas.getBoundingClientRect();
+    const scaleX = config.canvas.width / rect.width;
+    const scaleY = config.canvas.height / rect.height;
+    const x = (e.clientX - rect.left) * scaleX / config.scale;
+    const y = (e.clientY - rect.top) * scaleY / config.scale;
+
+    // Adjust for translate
+    const offsetX = (config.canvas.width / config.scale - config.width) / 2;
+    const offsetY = (config.canvas.height / config.scale - config.height) / 2;
+    const adjustedX = x - offsetX;
+    const adjustedY = y - offsetY;
+
+    const boxWidth = 600;
+    const boxHeight = 500;
+    const boxX = (config.width - boxWidth) / 2;
+    const boxY = (config.height - boxHeight) / 2;
+
+    const buttonWidth = 180;
+    const buttonHeight = 50;
+    const buttonSpacing = 30;
+    const startX = boxX + (boxWidth - 2 * buttonWidth - buttonSpacing) / 2;
+    const buttonY = boxY + boxHeight - 100;
+
+    // Play Again button
+    if (adjustedX >= startX && adjustedX <= startX + buttonWidth &&
+        adjustedY >= buttonY && adjustedY <= buttonY + buttonHeight) {
+        restartGame();
+    }
+
+    // Character Select button
+    const selectButtonX = startX + buttonWidth + buttonSpacing;
+    if (adjustedX >= selectButtonX && adjustedX <= selectButtonX + buttonWidth &&
+        adjustedY >= buttonY && adjustedY <= buttonY + buttonHeight) {
+        config.gameState = 'characterSelect';
+        characterSelectionLoop();
+    }
+}
+
+// Restart game function
+function restartGame() {
+    window.location.reload();
+}
+
+// Game over loop
+function gameOverLoop() {
+    if (config.gameState === 'gameOver') {
+        drawGameOverScreen();
+        requestAnimationFrame(gameOverLoop);
+    } else if (config.gameState === 'characterSelect') {
+        document.removeEventListener('keydown', handleGameOverInput);
+        document.removeEventListener('click', handleGameOverClick);
+    } else if (config.gameState === 'playing') {
+        document.removeEventListener('keydown', handleGameOverInput);
+        document.removeEventListener('click', handleGameOverClick);
     }
 }
 
@@ -686,6 +919,14 @@ function gameLoop(currentTime = 0) {
         drawQuiz();
     }
 
+    if (config.gameState === 'gameOver') {
+        // Switch to game over screen
+        document.addEventListener('keydown', handleGameOverInput);
+        config.canvas.addEventListener('click', handleGameOverClick);
+        gameOverLoop();
+        return;
+    }
+
     requestAnimationFrame(gameLoop);
 }
 
@@ -693,7 +934,7 @@ function gameLoop(currentTime = 0) {
 function setupControls() {
     // Click handler for quiz
     config.canvas.addEventListener('click', (e) => {
-        if (!isQuizActive || currentQuestion.type !== 'multiple_choice') return;
+        if (!isQuizActive) return;
 
         const rect = config.canvas.getBoundingClientRect();
         const scaleX = config.canvas.width / rect.width;
@@ -707,29 +948,42 @@ function setupControls() {
         const adjustedX = x - offsetX;
         const adjustedY = y - offsetY;
 
-        const boxWidth = 600;
-        const boxHeight = 400;
+        const boxWidth = 1200;
+        const boxHeight = 600;
         const boxX = (config.width - boxWidth) / 2;
         const boxY = (config.height - boxHeight) / 2;
 
-        if (adjustedX >= boxX && adjustedX <= boxX + boxWidth && adjustedY >= boxY && adjustedY <= boxY + boxHeight) {
-            currentQuestion.options.forEach((option, index) => {
-                const buttonY = boxY + 100 + index * 50;
-                const buttonHeight = 40;
-                const buttonX = boxX + 50;
-                const buttonWidth = boxWidth - 100;
+        if (currentQuestion.type === 'multiple_choice') {
+            // Handle 2x2 grid button clicks
+            const buttonWidth = 320;
+            const buttonHeight = 80;
+            const buttonSpacing = 20;
+            const startX = boxX + (boxWidth - 2 * buttonWidth - buttonSpacing) / 2;
+            const startY = boxY + 150;
 
-                if (adjustedX >= buttonX && adjustedX <= buttonX + buttonWidth && adjustedY >= buttonY && adjustedY <= buttonY + buttonHeight) {
+            currentQuestion.options.forEach((option, index) => {
+                const col = index % 2;
+                const row = Math.floor(index / 2);
+                const buttonX = startX + col * (buttonWidth + buttonSpacing);
+                const buttonY = startY + row * (buttonHeight + buttonSpacing);
+
+                if (adjustedX >= buttonX && adjustedX <= buttonX + buttonWidth &&
+                    adjustedY >= buttonY && adjustedY <= buttonY + buttonHeight) {
                     // Check answer
                     if (option === currentQuestion.correct) {
                         // Correct answer - set flag to jump later when close to obstacle
                         hasAnsweredCorrectly = true;
+                        currentScore += 10; // Add 10 points for correct answer
+                        // Update high score if needed
+                        if (currentScore > highScore) {
+                            highScore = currentScore;
+                            localStorage.setItem('gameHighScore', highScore.toString());
+                        }
                     } else {
                         // Wrong answer - game over
                         console.log('Wrong answer! Game Over.');
-                        config.gameState = 'characterSelect';
+                        config.gameState = 'gameOver';
                         obstacles = [];
-                        characterSelectionLoop();
                     }
                     // Reset quiz
                     isQuizActive = false;
@@ -740,6 +994,18 @@ function setupControls() {
                     lastQuizEnd = Date.now();
                 }
             });
+        } else if (currentQuestion.type === 'text_input') {
+            // Handle text input box clicks
+            const inputBoxWidth = 400;
+            const inputBoxHeight = 60;
+            const inputBoxX = (config.width - inputBoxWidth) / 2;
+            const inputBoxY = boxY + 200;
+
+            if (adjustedX >= inputBoxX && adjustedX <= inputBoxX + inputBoxWidth &&
+                adjustedY >= inputBoxY && adjustedY <= inputBoxY + inputBoxHeight) {
+                // Focus on input box (canvas will capture keyboard events)
+                config.canvas.focus();
+            }
         }
     });
 
@@ -753,12 +1019,17 @@ function setupControls() {
                 if (quizInput.trim().toLowerCase() === currentQuestion.correct.toLowerCase()) {
                     // Correct answer - set flag to jump later when close to obstacle
                     hasAnsweredCorrectly = true;
+                    currentScore += 10; // Add 10 points for correct answer
+                    // Update high score if needed
+                    if (currentScore > highScore) {
+                        highScore = currentScore;
+                        localStorage.setItem('gameHighScore', highScore.toString());
+                    }
                 } else {
                     // Wrong answer - game over
                     console.log('Wrong answer! Game Over.');
-                    config.gameState = 'characterSelect';
+                    config.gameState = 'gameOver';
                     obstacles = [];
-                    characterSelectionLoop();
                 }
                 // Reset quiz
                 isQuizActive = false;
@@ -774,28 +1045,8 @@ function setupControls() {
             }
             e.preventDefault();
         } else if (!isQuizActive) {
-            // Normal controls
+            // Game controls
             switch (e.key) {
-                case 'r':
-                case 'R':
-                    characterConfig.currentAnimation = 'run';
-                    characterConfig.frameIndex = 0;
-                    break;
-                case 'b':
-                case 'B':
-                    characterConfig.currentAnimation = 'boost';
-                    characterConfig.frameIndex = 0;
-                    break;
-                case 'i':
-                case 'I':
-                    characterConfig.currentAnimation = 'idle';
-                    characterConfig.frameIndex = 0;
-                    break;
-                case 'w':
-                case 'W':
-                    characterConfig.currentAnimation = 'win';
-                    characterConfig.frameIndex = 0;
-                    break;
                 case 'Escape':
                     // Return to character selection
                     config.gameState = 'characterSelect';
