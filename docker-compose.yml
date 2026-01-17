@@ -1,0 +1,9 @@
+services:
+  umaquizrun:
+      container_name: umaquizrun
+      image: lcaohoanq/umaquizrun:latest
+      build:
+          context: .
+          dockerfile: Dockerfile
+      ports:
+          - '8081:80'
