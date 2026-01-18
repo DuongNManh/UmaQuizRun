@@ -191,8 +191,8 @@ const Game = {
                 obstacle.hasTriggeredQuiz = true; // Mark as triggered to prevent re-triggering
             }
 
-            // Jump when answered correctly and obstacle is close
-            if (hasAnsweredCorrectly && targetObstacle === obstacle && !characterConfig.isJumping) {
+            // Jump when answered correctly and obstacle is close (but not if answered wrong)
+            if (hasAnsweredCorrectly && !hasAnsweredWrong && targetObstacle === obstacle && !characterConfig.isJumping) {
                 const jumpDistance = 250; // Distance at which to jump
                 if (obstacle.x < characterConfig.x + jumpDistance && obstacle.x > characterConfig.x - 50) {
                     characterConfig.isJumping = true;
@@ -201,14 +201,16 @@ const Game = {
                     characterConfig.currentAnimation = 'run';
                     characterConfig.frameIndex = 3;
 
-                    // Play jump sound effect
+                    // Play jump and success sound effects
                     const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
                     if (currentChar) {
                         const jumpSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-jump.ogg`;
                         AudioManager.playSoundEffect(jumpSoundPath, 0.7);
                     }
+                    AudioManager.playSoundEffect('sounds/success.ogg', 0.7);
 
                     hasAnsweredCorrectly = false; // Reset flag
+                    hasAnsweredWrong = false; // Reset flag
                     targetObstacle = null;
                 }
             }
@@ -217,12 +219,13 @@ const Game = {
             if (obstacle.x <= characterConfig.x + 100 && obstacle.x >= characterConfig.x - 50 && !characterConfig.isJumping) {
                 console.log('Collision! Game Over.');
 
-                // Play fail sound effect
+                // Play fail sound effects
                 const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
                 if (currentChar) {
                     const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
                     AudioManager.playSoundEffect(failSoundPath, 0.7);
                 }
+                AudioManager.playSoundEffect('sounds/fail.ogg', 0.7);
 
                 config.gameState = 'gameOver';
                 obstacles = [];
@@ -232,6 +235,7 @@ const Game = {
                 currentQuestion = null;
                 quizInput = '';
                 hasAnsweredCorrectly = false;
+                hasAnsweredWrong = false;
                 targetObstacle = null;
             }
         });
@@ -267,12 +271,13 @@ const Game = {
                 // Time out, game over
                 console.log('Quiz timeout! Game Over.');
 
-                // Play fail sound effect
+                // Play fail sound effects
                 const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
                 if (currentChar) {
                     const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
                     AudioManager.playSoundEffect(failSoundPath, 0.7);
                 }
+                AudioManager.playSoundEffect('sounds/fail.ogg', 0.7);
 
                 // Game over due to timeout
                 config.gameState = 'gameOver';
@@ -283,6 +288,7 @@ const Game = {
                 currentQuestion = null;
                 quizInput = '';
                 hasAnsweredCorrectly = false;
+                hasAnsweredWrong = false;
                 targetObstacle = null;
                 lastQuizEnd = currentTime;
             }
@@ -344,39 +350,10 @@ const Game = {
         document.addEventListener('keydown', (e) => {
             if (config.gameState !== 'playing') return;
 
-            if (isQuizActive && currentQuestion && currentQuestion.type === 'text_input') {
-                // Handle quiz input for text_input
-                if (e.key === 'Enter') {
-                    // Check answer
-                    if (quizInput.trim().toLowerCase() === currentQuestion.correct.toLowerCase()) {
-                        // Correct answer - set flag to jump later when close to obstacle
-                        hasAnsweredCorrectly = true;
-                        currentScore += 10; // Add 10 points for correct answer
-                        // Update high score if needed
-                        if (currentScore > highScore) {
-                            highScore = currentScore;
-                            localStorage.setItem('gameHighScore', highScore.toString());
-                        }
-                    } else {
-                        // Wrong answer - game over
-                        console.log('Wrong answer! Game Over.');
-                        config.gameState = 'gameOver';
-                        obstacles = [];
-                    }
-                    // Reset quiz
-                    isQuizActive = false;
-                    isGamePaused = false;
-                    slowFactor = 1; // Reset speed
-                    currentQuestion = null;
-                    quizInput = '';
-                    lastQuizEnd = Date.now();
-                } else if (e.key === 'Backspace') {
-                    quizInput = quizInput.slice(0, -1);
-                } else if (e.key.length === 1) {
-                    quizInput += e.key;
-                }
-                e.preventDefault();
-            } else if (!isQuizActive) {
+            if (isQuizActive) {
+                // Let Quiz module handle all quiz inputs
+                Quiz.handleKeyboard(e);
+            } else {
                 // Game controls
                 switch (e.key) {
                     case 'Escape':
@@ -389,12 +366,16 @@ const Game = {
         });
     },
 
-    // Start the game
+    // Start the appropriate game mode
     start() {
-        console.log('All assets loaded! Starting game...');
-        this.spawnObstacle(); // Spawn first fence immediately
-        lastQuizEnd = Date.now();
-        this.setupControls();
-        this.loop();
+        console.log('Starting game with mode:', currentGameMode);
+        
+        if (currentGameMode === GAME_MODES.RANDOM_10) {
+            Game10Questions.init();
+        } else if (currentGameMode === GAME_MODES.ENDLESS) {
+            GameEndless.init();
+        } else {
+            console.error('Unknown game mode:', currentGameMode);
+        }
     }
 };

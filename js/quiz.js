@@ -108,6 +108,90 @@ const Quiz = {
         }
     },
 
+    // Handle keyboard input for quiz
+    handleKeyboard(e) {
+        if (!isQuizActive || !currentQuestion) return;
+
+        if (currentQuestion.type === 'text_input') {
+            // Handle text input quiz
+            if (e.key === 'Enter') {
+                this.checkTextAnswer();
+            } else if (e.key === 'Backspace') {
+                quizInput = quizInput.slice(0, -1);
+            } else if (e.key.length === 1) {
+                quizInput += e.key;
+            }
+            e.preventDefault();
+        }
+        // Multiple choice is handled via mouse clicks only
+    },
+
+    // Check text input answer
+    checkTextAnswer() {
+        if (quizInput.trim().toLowerCase() === currentQuestion.correct.toLowerCase()) {
+            // Correct answer
+            if (currentGameMode === GAME_MODES.RANDOM_10) {
+                Game10Questions.handleCorrectAnswer();
+            } else {
+                // Endless mode
+                hasAnsweredCorrectly = true;
+                currentScore += 10;
+                // Update high score if needed
+                if (currentScore > highScore) {
+                    highScore = currentScore;
+                    localStorage.setItem('gameHighScore', highScore.toString());
+                }
+                this.resetQuiz();
+            }
+        } else {
+            // Wrong answer
+            if (currentGameMode === GAME_MODES.RANDOM_10) {
+                Game10Questions.handleWrongAnswer();
+            } else {
+                // Endless mode
+                GameEndless.handleWrongAnswer();
+            }
+        }
+    },
+
+    // Check multiple choice answer
+    checkMultipleChoiceAnswer(selectedOption) {
+        if (selectedOption === currentQuestion.correct) {
+            // Correct answer
+            if (currentGameMode === GAME_MODES.RANDOM_10) {
+                Game10Questions.handleCorrectAnswer();
+            } else {
+                // Endless mode
+                hasAnsweredCorrectly = true;
+                currentScore += 10;
+                // Update high score if needed
+                if (currentScore > highScore) {
+                    highScore = currentScore;
+                    localStorage.setItem('gameHighScore', highScore.toString());
+                }
+                this.resetQuiz();
+            }
+        } else {
+            // Wrong answer
+            if (currentGameMode === GAME_MODES.RANDOM_10) {
+                Game10Questions.handleWrongAnswer();
+            } else {
+                // Endless mode
+                GameEndless.handleWrongAnswer();
+            }
+        }
+    },
+
+    // Reset quiz state
+    resetQuiz() {
+        isQuizActive = false;
+        isGamePaused = false;
+        slowFactor = 1;
+        currentQuestion = null;
+        quizInput = '';
+        lastQuizEnd = Date.now();
+    },
+
     handleClick(e) {
         const rect = config.canvas.getBoundingClientRect();
         const scaleX = config.canvas.width / rect.width;
@@ -142,29 +226,7 @@ const Quiz = {
 
                 if (adjustedX >= buttonX && adjustedX <= buttonX + buttonWidth &&
                     adjustedY >= buttonY && adjustedY <= buttonY + buttonHeight) {
-                    // Check answer
-                    if (option === currentQuestion.correct) {
-                        // Correct answer - set flag to jump later when close to obstacle
-                        hasAnsweredCorrectly = true;
-                        currentScore += 10; // Add 10 points for correct answer
-                        // Update high score if needed
-                        if (currentScore > highScore) {
-                            highScore = currentScore;
-                            localStorage.setItem('gameHighScore', highScore.toString());
-                        }
-                    } else {
-                        // Wrong answer - game over
-                        console.log('Wrong answer! Game Over.');
-                        config.gameState = 'gameOver';
-                        obstacles = [];
-                    }
-                    // Reset quiz
-                    isQuizActive = false;
-                    isGamePaused = false;
-                    slowFactor = 1; // Reset speed
-                    currentQuestion = null;
-                    quizInput = '';
-                    lastQuizEnd = Date.now();
+                    this.checkMultipleChoiceAnswer(option);
                 }
             });
         } else if (currentQuestion.type === 'text_input') {

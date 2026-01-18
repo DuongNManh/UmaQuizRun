@@ -69,4 +69,5 @@ let fps = 0;
 let frameCount = 0;
 let lastFpsUpdate = 0;
 let hasAnsweredCorrectly = false; // Flag for correct answer
+let hasAnsweredWrong = false; // Flag for wrong answer
 let targetObstacle = null; // The obstacle to jump over
