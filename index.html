@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>2D Platform Game</title>
+    <title>HCM Runner - 2D Platform Game</title>
     <style>
         body {
             margin: 0;
@@ -21,8 +21,15 @@
 
 <body>
     <canvas id="game"></canvas>
-    <script src="js/game.js"></script>
+    <!-- Load modules in correct order -->
+    <script src="js/config.js"></script>
+    <script src="js/assets.js"></script>
     <script src="js/audio-manager.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="js/gameStartTransition.js"></script>
+    <script src="js/game-core.js"></script>
+    <script src="js/quiz.js"></script>
+    <script src="js/main.js"></script>
 </body>
 
 </html>
