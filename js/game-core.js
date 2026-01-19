@@ -272,11 +272,11 @@ const Game = {
                 console.log('Quiz timeout! Game Over.');
 
                 // Play fail sound effects
-                const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
-                if (currentChar) {
-                    const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
-                    AudioManager.playSoundEffect(failSoundPath, 0.7);
-                }
+                // const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
+                // if (currentChar) {
+                //     const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
+                //     AudioManager.playSoundEffect(failSoundPath, 0.7);
+                // }
                 AudioManager.playSoundEffect('sounds/fail.ogg', 0.7);
 
                 // Game over due to timeout
