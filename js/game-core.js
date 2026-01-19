@@ -369,7 +369,7 @@ const Game = {
     // Start the appropriate game mode
     start() {
         console.log('Starting game with mode:', currentGameMode);
-        
+
         if (currentGameMode === GAME_MODES.RANDOM_10) {
             Game10Questions.init();
         } else if (currentGameMode === GAME_MODES.ENDLESS) {

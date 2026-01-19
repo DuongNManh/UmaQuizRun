@@ -250,8 +250,8 @@ const GameOver = {
     draw() {
         // Duolingo-style gradient background
         const gradient = config.ctx.createLinearGradient(0, 0, config.width, config.height);
-        gradient.addColorStop(0, '#6E6565A6');
-        gradient.addColorStop(1, '#646464AD');
+        gradient.addColorStop(0, '#6E656521');
+        gradient.addColorStop(1, '#64646438');
         config.ctx.fillStyle = gradient;
         config.ctx.fillRect(0, 0, config.width, config.height);
 
