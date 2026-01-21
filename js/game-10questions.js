@@ -208,9 +208,7 @@ const Game10QuestionsResult = {
         if (config.gameState !== '10questionsResult') return;
 
         if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
-            // Go back to menu
-            config.gameState = 'menu';
-            Menu.loop();
+            window.location.reload();
         }
     },
 
@@ -243,8 +241,7 @@ const Game10QuestionsResult = {
         // Menu button click detection
         if (adjustedX >= menuButtonX && adjustedX <= menuButtonX + buttonWidth &&
             adjustedY >= buttonY && adjustedY <= buttonY + buttonHeight) {
-            config.gameState = 'menu';
-            Menu.loop();
+            window.location.reload();
         }
     },
 

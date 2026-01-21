@@ -1,26 +1,263 @@
 // Endless Mode - Game with Hearts System
 // Player has 3 hearts, loses 1 heart per wrong answer, game over when hearts = 0
 
+// Game Over screen module for Endless mode
+const GameEndlessResult = {
+    // Animation configuration
+    animation: {
+        frameIndex: 0,
+        frameCounter: 0,
+        frameDelay: 20, // Slow animation
+        lastFrameTime: 0,
+        isComplete: false,
+        hasPlayedOnce: false,
+        hasPlayedSound: false
+    },
+
+    // Initialize result screen
+    init() {
+        // Reset animation
+        this.animation.frameIndex = 0;
+        this.animation.frameCounter = 0;
+        this.animation.lastFrameTime = Date.now();
+        this.animation.isComplete = false;
+        this.animation.hasPlayedOnce = false;
+        this.animation.hasPlayedSound = false;
+    },
+
+    // Update character animation
+    updateAnimation() {
+        if (this.animation.isComplete) return;
+
+        const currentTime = Date.now();
+        if (currentTime - this.animation.lastFrameTime > this.animation.frameDelay * 16) {
+            const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
+            const sprite = assets.characters[currentChar.id].idle; // Use idle animation for game over
+
+            // Play sound effect only once when animation starts (popup shows)
+            if (this.animation.frameIndex === 0 && !this.animation.hasPlayedSound) {
+                if (currentScore >= 10) {
+                    // Excellent performance - play win sound
+                    if (currentChar) {
+                        const winSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-win.ogg`;
+                        AudioManager.playSoundEffect(winSoundPath, 0.5);
+                    }
+                } else {
+                    // Normal game over - play fail sound
+                    if (currentChar) {
+                        const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
+                        AudioManager.playSoundEffect(failSoundPath, 0.5);
+                    }
+                    AudioManager.playSoundEffect('sounds/fail.ogg', 0.7);
+                }
+                this.animation.hasPlayedSound = true;
+            }
+
+            if (sprite && sprite.complete) {
+                const spriteHeight = sprite.height;
+                const frameWidth = spriteHeight;
+                const frameCount = Math.floor(sprite.width / frameWidth);
+
+                if (frameCount > 1) {
+                    this.animation.frameIndex++;
+                    if (this.animation.frameIndex >= frameCount) {
+                        this.animation.frameIndex = frameCount - 1; // Stay on last frame
+                        this.animation.isComplete = true;
+                        this.animation.hasPlayedOnce = true;
+                    }
+                } else {
+                    this.animation.isComplete = true;
+                    this.animation.hasPlayedOnce = true;
+                }
+
+                this.animation.lastFrameTime = currentTime;
+            }
+        }
+    },
+
+    // Draw character animation
+    drawCharacter() {
+        const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
+        const sprite = assets.characters[currentChar.id].win;
+
+        if (sprite && sprite.complete) {
+            const spriteHeight = sprite.height;
+            const frameWidth = spriteHeight;
+            const frameCount = Math.floor(sprite.width / frameWidth);
+
+            // Character display position (left side of the result box)
+            const charSize = 180;
+            const boxWidth = 700;
+            const boxX = (config.width - boxWidth) / 2;
+            const charX = boxX + 50;
+            const charY = (config.height / 2) - charSize / 2;
+
+            // Draw current frame
+            if (frameCount > 1) {
+                config.ctx.drawImage(
+                    sprite,
+                    this.animation.frameIndex * frameWidth, 0, frameWidth, spriteHeight,
+                    charX, charY, charSize, charSize
+                );
+            } else {
+                config.ctx.drawImage(sprite, charX, charY, charSize, charSize);
+            }
+        }
+    },
+
+    // Draw result screen
+    draw() {
+        // Update animation
+        this.updateAnimation();
+
+        config.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        config.ctx.fillRect(0, 0, config.width, config.height);
+
+        // Result popup box
+        const boxWidth = 700;
+        const boxHeight = 550;
+        const boxX = (config.width - boxWidth) / 2;
+        const boxY = (config.height - boxHeight) / 2;
+
+        // Box background
+        config.ctx.fillStyle = '#fff';
+        config.ctx.beginPath();
+        config.ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 25);
+        config.ctx.fill();
+
+        // Box border - red for game over
+        const borderColor = '#ff4b4b';
+        config.ctx.strokeStyle = borderColor;
+        config.ctx.lineWidth = 4;
+        config.ctx.stroke();
+
+        // Draw character animation on the left
+        this.drawCharacter();
+
+        // Adjust text positions to account for character on left
+        const textAreaX = boxX + 250;
+        const textCenterX = textAreaX + (boxWidth - 250) / 2;
+
+        // Game Over title
+        config.ctx.fillStyle = borderColor;
+        config.ctx.font = 'bold 36px Arial';
+        config.ctx.textAlign = 'center';
+        config.ctx.fillText('GAME OVER!', textCenterX, boxY + 80);
+
+        // Failure message
+        config.ctx.fillStyle = borderColor;
+        config.ctx.font = 'bold 20px Arial';
+        config.ctx.fillText('💔 OUT OF LIVES! 💔', textCenterX, boxY + 120);
+
+        // Score section
+        config.ctx.fillStyle = '#2d3748';
+        config.ctx.font = 'bold 24px Arial';
+        config.ctx.fillText('Final Score', textCenterX, boxY + 180);
+
+        config.ctx.fillStyle = borderColor;
+        config.ctx.font = 'bold 42px Arial';
+        config.ctx.fillText(`${currentScore}`, textCenterX, boxY + 230);
+
+        // High score comparison
+        if (currentScore === highScore) {
+            config.ctx.fillStyle = '#4CAF50';
+            config.ctx.font = 'bold 18px Arial';
+            config.ctx.fillText('🎉 NEW HIGH SCORE! 🎉', textCenterX, boxY + 270);
+        } else {
+            config.ctx.fillStyle = '#4a5568';
+            config.ctx.font = 'bold 18px Arial';
+            config.ctx.fillText(`High Score: ${highScore}`, textCenterX, boxY + 270);
+        }
+
+        // Character name
+        const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
+        config.ctx.fillStyle = '#666';
+        config.ctx.font = 'bold 16px Arial';
+        config.ctx.fillText(currentChar ? currentChar.name : 'Unknown', textCenterX, boxY + 300);
+
+        // Single Menu button (like 10 questions mode)
+        const buttonWidth = 150;
+        const buttonHeight = 60;
+        const menuButtonX = boxX + (boxWidth - buttonWidth) / 2;
+        const buttonY = boxY + boxHeight - 120;
+
+        // Back to Menu button
+        config.ctx.fillStyle = '#4a5568';
+        config.ctx.beginPath();
+        config.ctx.roundRect(menuButtonX, buttonY, buttonWidth, buttonHeight, 15);
+        config.ctx.fill();
+        config.ctx.strokeStyle = '#fff';
+        config.ctx.lineWidth = 2;
+        config.ctx.stroke();
+
+        config.ctx.fillStyle = '#fff';
+        config.ctx.font = 'bold 16px Arial';
+        config.ctx.fillText('MENU', menuButtonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5);
+    },
+
+    // Handle input
+    handleInput(e) {
+        if (config.gameState !== 'endlessGameOver') return;
+
+        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+            window.location.reload();
+        }
+    },
+
+    // Handle clicks
+    handleClick(e) {
+        if (config.gameState !== 'endlessGameOver') return;
+
+        const rect = config.canvas.getBoundingClientRect();
+        const scaleX = config.canvas.width / rect.width;
+        const scaleY = config.canvas.height / rect.height;
+        const x = (e.clientX - rect.left) * scaleX / config.scale;
+        const y = (e.clientY - rect.top) * scaleY / config.scale;
+
+        // Adjust for translate
+        const offsetX = (config.canvas.width / config.scale - config.width) / 2;
+        const offsetY = (config.canvas.height / config.scale - config.height) / 2;
+        const adjustedX = x - offsetX;
+        const adjustedY = y - offsetY;
+
+        const boxWidth = 700;
+        const boxHeight = 550;
+        const boxX = (config.width - boxWidth) / 2;
+        const boxY = (config.height - boxHeight) / 2;
+
+        const buttonWidth = 150;
+        const buttonHeight = 60;
+        const menuButtonX = boxX + (boxWidth - buttonWidth) / 2; // Center the button
+        const buttonY = boxY + boxHeight - 120;
+
+        // Menu button click detection
+        if (adjustedX >= menuButtonX && adjustedX <= menuButtonX + buttonWidth &&
+            adjustedY >= buttonY && adjustedY <= buttonY + buttonHeight) {
+            window.location.reload(); // Reload the game to reset state
+        }
+    },
+
+    // Result loop
+    loop() {
+        if (config.gameState === 'endlessGameOver') {
+            this.draw();
+            requestAnimationFrame(this.loop.bind(this));
+        }
+    }
+};
+
 const GameEndless = {
     hearts: 3,
     maxHearts: 3,
+    endGameTime: null,
+    isEndingGame: false,
 
     // Initialize endless mode - called by game-core.js
     init() {
         console.log('Starting Endless Mode...');
         this.hearts = this.maxHearts;
-        currentScore = 0;
-
-        // Reset all game state
-        obstacles = [];
-        isQuizActive = false;
-        isGamePaused = false;
-        slowFactor = 1;
-        currentQuestion = null;
-        quizInput = '';
-        hasAnsweredCorrectly = false;
-        hasAnsweredWrong = false;
-        targetObstacle = null;
+        this.endGameTime = null;
+        this.isEndingGame = false;
 
         // Reset character
         characterConfig.y = config.groundY;
@@ -206,15 +443,17 @@ const GameEndless = {
             // Game over - no hearts left
             console.log('No hearts left! Game Over.');
 
-            // Play fail sound effects
-            const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
-            if (currentChar) {
-                const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
-                AudioManager.playSoundEffect(failSoundPath, 0.7);
+            // Update high score if needed
+            if (currentScore > highScore) {
+                highScore = currentScore;
+                localStorage.setItem('hcmRunnerHighScore', highScore);
             }
-            AudioManager.playSoundEffect('sounds/fail.ogg', 0.7);
 
-            config.gameState = 'gameOver';
+            // Start ending game sequence with 3 second delay
+            this.isEndingGame = true;
+            this.endGameTime = Date.now();
+
+            // Clean up quiz state immediately
             obstacles = [];
             isQuizActive = false;
             isGamePaused = false;
@@ -227,7 +466,49 @@ const GameEndless = {
         }
     },
 
-    // Draw hearts UI
+    // Show final game over screen after delay
+    showGameOverScreen() {
+        config.gameState = 'endlessGameOver';
+        obstacles = [];
+
+        // Initialize result screen
+        GameEndlessResult.init();
+
+        // Setup result screen controls
+        document.addEventListener('keydown', GameEndlessResult.handleInput.bind(GameEndlessResult));
+        config.canvas.addEventListener('click', GameEndlessResult.handleClick.bind(GameEndlessResult));
+        GameEndlessResult.loop();
+    },
+
+    // Draw countdown overlay when ending game
+    drawEndingGameUI() {
+        if (!this.isEndingGame) return;
+
+        const timeElapsed = Date.now() - this.endGameTime;
+        const timeLeft = Math.ceil((3000 - timeElapsed) / 1000);
+
+        if (timeLeft > 0) {
+            // Semi-transparent overlay
+            config.ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+            config.ctx.fillRect(0, 0, config.width, config.height);
+
+            // Game Over message
+            config.ctx.fillStyle = '#fff';
+            config.ctx.font = 'bold 48px Arial';
+            config.ctx.textAlign = 'center';
+            config.ctx.fillText('Game Over!', config.width / 2, config.height / 2 - 50);
+
+            // Countdown
+            config.ctx.fillStyle = '#ff4757';
+            config.ctx.font = 'bold 36px Arial';
+            config.ctx.fillText(`Showing results in ${timeLeft}...`, config.width / 2, config.height / 2 + 20);
+
+            // Score preview
+            config.ctx.fillStyle = '#ff9600';
+            config.ctx.font = 'bold 32px Arial';
+            config.ctx.fillText(`Final Score: ${currentScore}`, config.width / 2, config.height / 2 + 80);
+        }
+    },
     drawHeartsUI() {
         if (config.gameState !== 'playing') return;
 
@@ -331,23 +612,27 @@ const GameEndless = {
         }
         this.updateQuizEndless(); // Use endless specific quiz logic
 
+        // Check if we should show game over screen after delay
+        if (this.isEndingGame && Date.now() - this.endGameTime >= 3000) {
+            this.showGameOverScreen();
+            return;
+        }
+
+        if (config.gameState === 'endlessGameOver') {
+            // Game over result screen is handled by its own module
+            return;
+        }
+
         // Draw everything with endless mode background
         this.drawBackgroundEndless(); // Use endless specific background
         Game.drawObstacles();
         Game.drawCharacter(); // This handles character animation
         Game.drawUI();
         this.drawHeartsUI(); // Draw hearts specific to endless mode
+        this.drawEndingGameUI(); // Draw countdown overlay if ending
 
         if (isQuizActive) {
             Quiz.draw();
-        }
-
-        if (config.gameState === 'gameOver') {
-            // Switch to game over screen
-            document.addEventListener('keydown', GameOver.handleInput.bind(GameOver));
-            config.canvas.addEventListener('click', GameOver.handleClick.bind(GameOver));
-            GameOver.loop();
-            return;
         }
 
         requestAnimationFrame(this.loop.bind(this));

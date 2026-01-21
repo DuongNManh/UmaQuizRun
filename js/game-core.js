@@ -358,8 +358,7 @@ const Game = {
                 switch (e.key) {
                     case 'Escape':
                         // Return to menu
-                        config.gameState = 'menu';
-                        Menu.loop();
+                        window.location.reload();
                         break;
                 }
             }

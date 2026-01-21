@@ -45,6 +45,13 @@ var AudioManager = (function () {
   var isInitialized = false;
   var gameState = 'menu'; // 'menu' | 'playing' | 'gameover'
 
+  // character SFX tracking (for stopping previous character SFX)
+  var activeCharacterSFX = {
+    source: null,
+    gain: null,
+    timeoutId: null
+  };
+
   // persist keys
   var KEY_MUTE = 'gameAudioMuted';
   var KEY_VOL = 'gameAudioVolume';
@@ -408,7 +415,90 @@ var AudioManager = (function () {
     return isMuted;
   }
 
-  // PUBLIC: play short sound effect (uses a small buffer decode each time or <audio> fallback)
+  // PUBLIC: stop current character SFX (for character switching)
+  function stopCharacterSFX() {
+    if (activeCharacterSFX.source) {
+      try {
+        activeCharacterSFX.source.stop();
+      } catch (e) { }
+      try {
+        activeCharacterSFX.source.disconnect();
+      } catch (e) { }
+      try {
+        activeCharacterSFX.gain.disconnect();
+      } catch (e) { }
+    }
+    if (activeCharacterSFX.timeoutId) {
+      clearTimeout(activeCharacterSFX.timeoutId);
+    }
+    activeCharacterSFX.source = null;
+    activeCharacterSFX.gain = null;
+    activeCharacterSFX.timeoutId = null;
+  }
+
+  // PUBLIC: play character SFX (with auto-stop previous)
+  function playCharacterSFX(url, volume) {
+    // Stop any previous character SFX first
+    stopCharacterSFX();
+
+    volume = typeof volume === 'number' ? Math.max(0, Math.min(1, volume)) : 1.0;
+    ensureAudioContext();
+    if (isMuted) return;
+
+    fetch(url)
+      .then(function (r) {
+        return r.arrayBuffer();
+      })
+      .then(function (ab) {
+        return audioCtx.decodeAudioData(ab);
+      })
+      .then(function (buf) {
+        // Check if we've been stopped while loading
+        if (!activeCharacterSFX || activeCharacterSFX.source !== null) return;
+
+        var s = audioCtx.createBufferSource();
+        var g = audioCtx.createGain();
+        s.buffer = buf;
+        g.gain.value = volume;
+        s.connect(g);
+        g.connect(masterGain);
+        s.start();
+
+        // Store references for potential stopping
+        activeCharacterSFX.source = s;
+        activeCharacterSFX.gain = g;
+
+        // cleanup after duration
+        activeCharacterSFX.timeoutId = setTimeout(
+          function () {
+            try {
+              s.stop();
+            } catch (e) { }
+            try {
+              s.disconnect();
+            } catch (e) { }
+            try {
+              g.disconnect();
+            } catch (e) { }
+            // Clear references
+            if (activeCharacterSFX.source === s) {
+              activeCharacterSFX.source = null;
+              activeCharacterSFX.gain = null;
+              activeCharacterSFX.timeoutId = null;
+            }
+          },
+          (buf.duration + 0.1) * 1000
+        );
+      })
+      .catch(function (e) {
+        // fallback to <audio> element if decode fails
+        try {
+          var a = new Audio(url);
+          a.volume = volume;
+          a.play().catch(function () { });
+        } catch (er) { }
+      });
+  }
   function playSoundEffect(url, volume) {
     volume = typeof volume === 'number' ? Math.max(0, Math.min(1, volume)) : 1.0;
     ensureAudioContext();
@@ -469,6 +559,8 @@ var AudioManager = (function () {
     getVolume: getVolume,
     getMuteState: getMuteState,
     playSoundEffect: playSoundEffect,
+    playCharacterSFX: playCharacterSFX,
+    stopCharacterSFX: stopCharacterSFX,
 
     // internals exposed for debugging (optional)
     _audioCtx: function () {

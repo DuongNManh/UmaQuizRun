@@ -172,11 +172,7 @@ const Menu = {
         console.log('Starting menu...');
         this.backgroundImage = assets.backgrounds.bgMenu;
         this.lastSpawnTime = Date.now();
-        
-        // Reset canvas transform and apply proper scaling
-        config.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        resizeCanvas();
-        
+
         document.addEventListener('keydown', this.handleInput.bind(this));
         this.loop();
     },
@@ -205,7 +201,7 @@ const CharacterSelection = {
     lastAnimationTime: 0,
     // SFX debounce system
     sfxTimer: null,
-    sfxDelay: 500, // 500ms delay trước khi phát SFX
+    sfxDelay: 100, // 100ms delay trước khi phát SFX
 
     draw() {
         // Background image
@@ -388,7 +384,7 @@ const CharacterSelection = {
             const currentChar = CHARACTERS[this.currentCharacterIndex];
             if (currentChar) {
                 const idleSfxPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-idle.ogg`;
-                AudioManager.playSoundEffect(idleSfxPath, 0.5);
+                AudioManager.playCharacterSFX(idleSfxPath, 0.5);
             }
             this.sfxTimer = null;
         }, this.sfxDelay);
@@ -399,7 +395,7 @@ const CharacterSelection = {
         const currentChar = CHARACTERS[this.currentCharacterIndex];
         if (currentChar) {
             const idleSfxPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-idle.ogg`;
-            AudioManager.playSoundEffect(idleSfxPath, 0.5);
+            AudioManager.playCharacterSFX(idleSfxPath, 0.5);
         }
     },
 
@@ -510,11 +506,7 @@ const CharacterSelection = {
     start() {
         console.log('All assets loaded! Character selection ready...');
         this.backgroundImage = assets.backgrounds.bgMenu;
-        
-        // Reset canvas transform and apply proper scaling
-        config.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        resizeCanvas();
-        
+
         document.addEventListener('keydown', this.handleInput.bind(this));
         config.canvas.addEventListener('click', this.handleClick.bind(this));
         this.hasPlayedInitialSfx = false; // Reset flag khi vào character selection
