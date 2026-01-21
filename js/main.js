@@ -22,6 +22,10 @@ function resizeCanvas() {
     config.canvas.width = window.innerWidth;
     config.canvas.height = window.innerHeight;
     config.scale = Math.min(config.canvas.width / config.width, config.canvas.height / config.height);
+    
+    // Save current transform
+    config.ctx.save();
+    config.ctx.setTransform(1, 0, 0, 1, 0, 0);
     config.ctx.scale(config.scale, config.scale);
 
     // Center the game
@@ -31,7 +35,9 @@ function resizeCanvas() {
 
     // Update relative positions
     config.groundY = config.height * 0.8;
-    characterConfig.y = config.groundY; // Reset to ground if not jumping
+    if (typeof characterConfig !== 'undefined') {
+        characterConfig.y = config.groundY; // Reset to ground if not jumping
+    }
 }
 
 // Start when page loads

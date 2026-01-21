@@ -24,7 +24,7 @@ const characterConfig = {
 // Background scrolling
 const background = {
     x1: 0,
-    x2: 0,
+    x2: config.width, // Start second background at right edge for seamless scrolling
     speed: 8
 };
 
@@ -37,9 +37,9 @@ const Game = {
 
             // Draw second background (flipped for seamless effect)
             config.ctx.save();
-            config.ctx.translate(background.x2 + config.width, 0);
+            config.ctx.translate(background.x2, 0);
             config.ctx.scale(-1, 1);
-            config.ctx.drawImage(assets.backgrounds.bg1, 0, 0, config.width, config.height);
+            config.ctx.drawImage(assets.backgrounds.bg1, -config.width, 0, config.width, config.height);
             config.ctx.restore();
 
             // Update positions with slow factor and delta time

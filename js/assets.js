@@ -7,7 +7,8 @@ const assets = {
         bg2: null,
         fence: null,
         bgBoost1: null,
-        bgBoost2: null
+        bgBoost2: null,
+        bgMenu: null
     },
     characters: {},
     effects: {
@@ -24,7 +25,8 @@ CHARACTERS.forEach(char => {
         boost: null,
         idle: null,
         win: null,
-        portrait: null
+        portrait: null,
+        mainSprite: null
     };
 });
 
@@ -53,6 +55,7 @@ function loadAssets() {
         { key: 'fence', path: 'assets/background/fence_00.png', category: 'backgrounds' },
         { key: 'bgBoost1', path: 'assets/background/bg-boost-1.png', category: 'backgrounds' },
         { key: 'bgBoost2', path: 'assets/background/bg-boost-2.png', category: 'backgrounds' },
+        { key: 'bgMenu', path: 'assets/background/bg-menu.png', category: 'backgrounds' },
 
         // Run smoke effects (sprite sheet)
         { key: 'sheet', path: 'assets/run/run_smoke_sheet.png', category: 'effects', effect: 'smoke' }
@@ -73,6 +76,14 @@ function loadAssets() {
         imagesToLoad.push({
             key: 'portrait',
             path: `assets/characters/${char.folder}/${char.prefix}-idle.png`,
+            category: 'characters',
+            character: char.id
+        });
+
+        // Add main sprite (no suffix) if exists
+        imagesToLoad.push({
+            key: 'mainSprite',
+            path: `assets/characters/${char.folder}/${char.prefix}.png`,
             category: 'characters',
             character: char.id
         });

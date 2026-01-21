@@ -7,14 +7,95 @@ const Menu = {
         { text: 'RANDOM 10 QUESTIONS', mode: GAME_MODES.RANDOM_10 },
         { text: 'ENDLESS MODE', mode: GAME_MODES.ENDLESS }
     ],
+    backgroundImage: null,
+    runningCharacters: [],
+    lastSpawnTime: 0,
+    spawnInterval: 6000, // 6 seconds
+    frameDelay: 150,
+
+    update() {
+        const currentTime = Date.now();
+
+        // Spawn new characters
+        if (currentTime - this.lastSpawnTime > this.spawnInterval) {
+            this.spawnCharacters();
+            this.lastSpawnTime = currentTime;
+        }
+
+        // Update running characters
+        this.runningCharacters.forEach((runner, index) => {
+            runner.x += runner.speed;
+
+            // Update animation frame
+            if (currentTime - runner.lastFrameTime > this.frameDelay) {
+                const sprite = assets.characters[runner.char.id].mainSprite || assets.characters[runner.char.id].idle;
+                if (sprite && sprite.complete) {
+                    const spriteHeight = sprite.height;
+                    const frameWidth = spriteHeight;
+                    const frameCount = Math.floor(sprite.width / frameWidth);
+                    if (frameCount > 1) {
+                        runner.frameIndex = (runner.frameIndex + 1) % frameCount;
+                    }
+                }
+                runner.lastFrameTime = currentTime;
+            }
+
+            // Remove if off screen
+            if (runner.x > config.width + 200) {
+                this.runningCharacters.splice(index, 1);
+            }
+        });
+    },
+
+    spawnCharacters() {
+        if (this.runningCharacters.length >= 10) return;
+        const numToSpawn = 2 + Math.floor(Math.random() * 3); // 2 to 4
+        const availableChars = [...CHARACTERS];
+
+        for (let i = 0; i < numToSpawn && availableChars.length > 0; i++) {
+            const randomIndex = Math.floor(Math.random() * availableChars.length);
+            const char = availableChars.splice(randomIndex, 1)[0];
+
+            this.runningCharacters.push({
+                char: char,
+                x: -200,
+                yOffset: -200 + Math.random() * 100, // Random vertical offset from 50 to 150
+                speed: 5 + Math.random() * 5, // 5-10
+                frameIndex: 0,
+                lastFrameTime: Date.now()
+            });
+        }
+    },
 
     draw() {
-        // Background gradient
-        const gradient = config.ctx.createLinearGradient(0, 0, 0, config.height);
-        gradient.addColorStop(0, '#1a1a2e');
-        gradient.addColorStop(1, '#16213e');
-        config.ctx.fillStyle = gradient;
-        config.ctx.fillRect(0, 0, config.width, config.height);
+        // Background image
+        if (this.backgroundImage && this.backgroundImage.complete) {
+            config.ctx.drawImage(this.backgroundImage, 0, 0, config.width, config.height);
+        } else {
+            // Fallback gradient
+            const gradient = config.ctx.createLinearGradient(0, 0, 0, config.height);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(1, '#16213e');
+            config.ctx.fillStyle = gradient;
+            config.ctx.fillRect(0, 0, config.width, config.height);
+        }
+
+        // Draw running characters
+        this.runningCharacters.forEach(runner => {
+            const sprite = assets.characters[runner.char.id].mainSprite || assets.characters[runner.char.id].idle;
+            if (sprite && sprite.complete && sprite.naturalWidth > 0) {
+                const spriteHeight = sprite.height;
+                const frameWidth = spriteHeight;
+                const charSize = 250;
+                const charY = config.height - charSize + runner.yOffset;
+
+                config.ctx.drawImage(
+                    sprite,
+                    runner.frameIndex * frameWidth, 0, frameWidth, spriteHeight,
+                    runner.x - charSize / 2, charY, charSize, charSize
+                );
+            }
+        });
 
         // Title
         config.ctx.fillStyle = '#fff';
@@ -89,12 +170,20 @@ const Menu = {
 
     start() {
         console.log('Starting menu...');
+        this.backgroundImage = assets.backgrounds.bgMenu;
+        this.lastSpawnTime = Date.now();
+        
+        // Reset canvas transform and apply proper scaling
+        config.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        resizeCanvas();
+        
         document.addEventListener('keydown', this.handleInput.bind(this));
         this.loop();
     },
 
     loop() {
         if (config.gameState === 'menu') {
+            this.update();
             this.draw();
             requestAnimationFrame(this.loop.bind(this));
         } else if (config.gameState === 'characterSelect') {
@@ -108,6 +197,7 @@ const CharacterSelection = {
     selectedIndex: 0,
     currentCharacterIndex: 0,
     hasPlayedInitialSfx: false,
+    backgroundImage: null,
     // Animation config cho character preview
     frameIndex: 0,
     frameCounter: 0,
@@ -118,12 +208,17 @@ const CharacterSelection = {
     sfxDelay: 500, // 500ms delay trước khi phát SFX
 
     draw() {
-        // Background gradient similar to menu
-        const gradient = config.ctx.createLinearGradient(0, 0, 0, config.height);
-        gradient.addColorStop(0, '#1a1a2e');
-        gradient.addColorStop(1, '#16213e');
-        config.ctx.fillStyle = gradient;
-        config.ctx.fillRect(0, 0, config.width, config.height);
+        // Background image
+        if (this.backgroundImage && this.backgroundImage.complete) {
+            config.ctx.drawImage(this.backgroundImage, 0, 0, config.width, config.height);
+        } else {
+            // Fallback gradient
+            const gradient = config.ctx.createLinearGradient(0, 0, 0, config.height);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(1, '#16213e');
+            config.ctx.fillStyle = gradient;
+            config.ctx.fillRect(0, 0, config.width, config.height);
+        }
 
         // Title
         config.ctx.fillStyle = '#fff';
@@ -414,6 +509,12 @@ const CharacterSelection = {
 
     start() {
         console.log('All assets loaded! Character selection ready...');
+        this.backgroundImage = assets.backgrounds.bgMenu;
+        
+        // Reset canvas transform and apply proper scaling
+        config.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        resizeCanvas();
+        
         document.addEventListener('keydown', this.handleInput.bind(this));
         config.canvas.addEventListener('click', this.handleClick.bind(this));
         this.hasPlayedInitialSfx = false; // Reset flag khi vào character selection
