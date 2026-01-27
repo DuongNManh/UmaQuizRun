@@ -42,7 +42,7 @@ const SMOKE_FRAME_COUNT = 6;
 
 // Game constants
 const QUIZ_TRIGGER_DISTANCE = 1100; // Distance from character to trigger quiz
-const QUIZ_TIME_LIMIT = 10000; // 10 seconds
+const QUIZ_TIME_LIMIT = 10000; // 10 seconds default
 const OBSTACLE_SPAWN_INTERVAL = 5000; // 5 seconds after quiz ends
 const TARGET_FPS = 60;
 const FIXED_TIME_STEP = 1000 / TARGET_FPS; // 16.67ms
@@ -51,6 +51,7 @@ const FIXED_TIME_STEP = 1000 / TARGET_FPS; // 16.67ms
 let currentGameMode = GAME_MODES.ENDLESS;
 let currentQuestion = null;
 let quizTimer = 0;
+let quizTimeLimitMs = QUIZ_TIME_LIMIT; // actual limit for current question
 let isQuizActive = false;
 let quizStartTime = 0;
 let quizInput = '';

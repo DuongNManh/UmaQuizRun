@@ -21,6 +21,9 @@ async function init() {
 function resizeCanvas() {
     config.canvas.width = window.innerWidth;
     config.canvas.height = window.innerHeight;
+    // Use "cover" scaling so the game area always fills the canvas,
+    // even if it means cropping a bit on one axis. This prevents
+    // top/bottom gaps where the body gradient shows through.
     config.scale = Math.min(config.canvas.width / config.width, config.canvas.height / config.height);
     
     // Save current transform

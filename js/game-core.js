@@ -123,7 +123,7 @@ const Game = {
         config.ctx.fillStyle = '#fff';
         config.ctx.font = 'bold 24px Arial';
         config.ctx.textAlign = 'left';
-        config.ctx.fillText('SCORE', 20, 40);
+        config.ctx.fillText('ĐIỂM HIỆN TẠI', 20, 40);
 
         config.ctx.fillStyle = '#58cc02';
         config.ctx.font = 'bold 28px Arial';
@@ -131,8 +131,7 @@ const Game = {
 
         config.ctx.fillStyle = '#fff';
         config.ctx.font = '16px Arial';
-        config.ctx.fillText(`High Score: ${highScore}`, 20, 95);
-        config.ctx.fillText(`FPS: ${fps}`, 20, 115);
+        config.ctx.fillText(`ĐIỂM CAO: ${highScore}`, 20, 95);
 
         // Current character info
         const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
@@ -141,8 +140,12 @@ const Game = {
         config.ctx.fillStyle = '#fff';
         config.ctx.font = '18px Arial';
         config.ctx.textAlign = 'left';
-        config.ctx.fillText(`Character: ${currentChar ? currentChar.name : 'Unknown'}`, config.width - 300, 35);
-        config.ctx.fillText(`Animation: ${characterConfig.currentAnimation}`, config.width - 300, 60);
+        config.ctx.fillText(`Nhân vật: ${currentChar ? currentChar.name : 'Unknown'}`, config.width - 300, 35);
+
+        // Draw any active quiz answer effects on top of UI
+        if (typeof Quiz !== 'undefined' && Quiz.drawEffects) {
+            Quiz.drawEffects();
+        }
     },
 
     // Spawn a new obstacle (fence)
@@ -186,7 +189,11 @@ const Game = {
                 isGamePaused = true;
                 slowFactor = 0.2;
                 quizStartTime = currentTime;
-                quizTimer = QUIZ_TIME_LIMIT;
+
+                // Per-question time limit: use duration_in_seconds if provided, else default
+                const durationSeconds = currentQuestion.duration_in_seconds || (QUIZ_TIME_LIMIT / 1000);
+                quizTimeLimitMs = durationSeconds * 1000;
+                quizTimer = quizTimeLimitMs;
                 targetObstacle = obstacle; // Mark this as the target to jump
                 obstacle.hasTriggeredQuiz = true; // Mark as triggered to prevent re-triggering
             }
@@ -305,12 +312,12 @@ const Game = {
         lastFrameTime = currentTime;
 
         // FPS counter
-        frameCount++;
-        if (currentTime - lastFpsUpdate >= 1000) {
-            fps = frameCount;
-            frameCount = 0;
-            lastFpsUpdate = currentTime;
-        }
+        // frameCount++;
+        // if (currentTime - lastFpsUpdate >= 1000) {
+        //     fps = frameCount;
+        //     frameCount = 0;
+        //     lastFpsUpdate = currentTime;
+        // }
 
         config.ctx.clearRect(0, 0, config.width, config.height);
         this.updateObstacles();
@@ -345,6 +352,15 @@ const Game = {
         config.canvas.addEventListener('click', (e) => {
             if (!isQuizActive) return;
             Quiz.handleClick(e);
+        });
+
+        // Hover cursor for quiz answers/input
+        config.canvas.addEventListener('mousemove', (e) => {
+            if (!isQuizActive || !currentQuestion) {
+                config.canvas.style.cursor = 'default';
+                return;
+            }
+            Quiz.handleMouseMove(e);
         });
 
         document.addEventListener('keydown', (e) => {

@@ -154,16 +154,9 @@ const GameStartTransition = {
             config.ctx.fillRect(this.swipeTransition.x, 0, config.width, config.height);
         }
 
-        // Draw game mode text
-        config.ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        config.ctx.font = 'bold 48px Arial';
-        config.ctx.textAlign = 'center';
-        const modeText = currentGameMode === GAME_MODES.RANDOM_10 ? 'RANDOM 10 QUESTIONS' : 'ENDLESS MODE';
-        config.ctx.fillText(modeText, config.width / 2, 100);
-
         config.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
         config.ctx.font = 'bold 32px Arial';
-        config.ctx.fillText('GET READY!', config.width / 2, 160);
+        config.ctx.fillText('Cùng chiến thắng nào!', config.width / 2, 160);
     },
 
     startLoop() {

@@ -321,7 +321,11 @@ const GameEndless = {
                 isGamePaused = true;
                 slowFactor = 0.2;
                 quizStartTime = currentTime;
-                quizTimer = QUIZ_TIME_LIMIT;
+
+                // Per-question time limit: use duration_in_seconds if provided, else default
+                const durationSeconds = currentQuestion.duration_in_seconds || (QUIZ_TIME_LIMIT / 1000);
+                quizTimeLimitMs = durationSeconds * 1000;
+                quizTimer = quizTimeLimitMs;
                 targetObstacle = obstacle; // Mark this as the target to jump
                 obstacle.hasTriggeredQuiz = true; // Mark as triggered to prevent re-triggering
             }
@@ -554,6 +558,15 @@ const GameEndless = {
             Quiz.handleClick(e);
         });
 
+        // Hover cursor for quiz answers/input
+        config.canvas.addEventListener('mousemove', (e) => {
+            if (!isQuizActive || !currentQuestion) {
+                config.canvas.style.cursor = 'default';
+                return;
+            }
+            Quiz.handleMouseMove(e);
+        });
+
         document.addEventListener('keydown', (e) => {
             if (config.gameState !== 'playing') return;
 
@@ -577,7 +590,7 @@ const GameEndless = {
     updateQuizEndless() {
         if (isQuizActive) {
             const currentTime = Date.now();
-            quizTimer = QUIZ_TIME_LIMIT - (currentTime - quizStartTime);
+            quizTimer = quizTimeLimitMs - (currentTime - quizStartTime);
             if (quizTimer <= 0) {
                 // Time out - call handleWrongAnswer (will be processed as wrong answer)
                 console.log('Quiz timeout! Counting as wrong answer.');

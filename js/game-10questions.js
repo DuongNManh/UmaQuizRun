@@ -417,7 +417,7 @@ const Game10Questions = {
         config.ctx.fillStyle = '#fff';
         config.ctx.font = 'bold 16px Arial';
         config.ctx.textAlign = 'center';
-        config.ctx.fillText(`Question ${this.currentQuestionNumber}/${this.maxQuestions}`, config.width / 2, barY + barHeight + 25);
+        config.ctx.fillText(`Câu hỏi ${this.currentQuestionNumber}/${this.maxQuestions}`, config.width / 2, barY + barHeight + 25);
 
 
         // Show countdown when ending game
@@ -455,6 +455,15 @@ const Game10Questions = {
         config.canvas.addEventListener('click', (e) => {
             if (!isQuizActive) return;
             Quiz.handleClick(e);
+        });
+
+        // Hover cursor for quiz answers/input
+        config.canvas.addEventListener('mousemove', (e) => {
+            if (!isQuizActive || !currentQuestion) {
+                config.canvas.style.cursor = 'default';
+                return;
+            }
+            Quiz.handleMouseMove(e);
         });
 
         document.addEventListener('keydown', (e) => {
@@ -549,7 +558,11 @@ const Game10Questions = {
                 isGamePaused = true;
                 slowFactor = 0.2;
                 quizStartTime = currentTime;
-                quizTimer = QUIZ_TIME_LIMIT;
+
+                // Per-question time limit: use duration_in_seconds if provided, else default
+                const durationSeconds = currentQuestion.duration_in_seconds || (QUIZ_TIME_LIMIT / 1000);
+                quizTimeLimitMs = durationSeconds * 1000;
+                quizTimer = quizTimeLimitMs;
                 targetObstacle = obstacle; // Mark this as the target to jump
                 obstacle.hasTriggeredQuiz = true; // Mark as triggered to prevent re-triggering
             }
@@ -612,7 +625,7 @@ const Game10Questions = {
     updateQuiz10Q() {
         if (isQuizActive) {
             const currentTime = Date.now();
-            quizTimer = QUIZ_TIME_LIMIT - (currentTime - quizStartTime);
+            quizTimer = quizTimeLimitMs - (currentTime - quizStartTime);
             if (quizTimer <= 0) {
                 // Time out counts as wrong answer, but game continues
                 console.log('Quiz timeout! Counting as wrong answer.');

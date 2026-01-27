@@ -30,6 +30,16 @@ CHARACTERS.forEach(char => {
     };
 });
 
+// Utility function to shuffle an array (Fisher-Yates algorithm)
+function shuffleArray(array) {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
 // Load quiz data from JSON
 async function loadQuizData() {
     try {
@@ -37,8 +47,20 @@ async function loadQuizData() {
         if (!response.ok) {
             throw new Error('Failed to load quiz data');
         }
-        quizData = await response.json();
-        console.log('Quiz data loaded:', quizData);
+        const data = await response.json();
+        
+        // Check if data has new structure with shuffle flag
+        if (data.questions && Array.isArray(data.questions)) {
+            // New structure with shuffle flag
+            quizData = data.shuffle ? shuffleArray(data.questions) : data.questions;
+            console.log('Quiz data loaded:', quizData.length, 'questions', data.shuffle ? '(shuffled)' : '');
+        } else if (Array.isArray(data)) {
+            // Old structure (backward compatibility)
+            quizData = data;
+            console.log('Quiz data loaded (legacy format):', quizData.length, 'questions');
+        } else {
+            throw new Error('Invalid quiz data format');
+        }
     } catch (error) {
         console.error('Error loading quiz data:', error);
         // Fallback to empty array or default
@@ -132,7 +154,7 @@ function drawLoadingScreen() {
     config.ctx.fillStyle = '#fff';
     config.ctx.font = '24px Arial';
     config.ctx.textAlign = 'center';
-    config.ctx.fillText('Loading Assets...', config.width / 2, config.height / 2 - 20);
+    config.ctx.fillText('Đang tải...', config.width / 2, config.height / 2 - 20);
 
     // Progress bar
     const barWidth = 300;
