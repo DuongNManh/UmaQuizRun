@@ -28,7 +28,8 @@ var AudioManager = (function () {
   var buffers = {
     intro: null,
     loop: null,
-    gameover: null
+    gameover: null,
+    background: null
   };
 
   // active sources and their gain nodes
@@ -36,7 +37,8 @@ var AudioManager = (function () {
   var active = {
     intro: null,
     loop: null,
-    gameover: null
+    gameover: null,
+    background: null
   };
 
   // state
@@ -436,6 +438,33 @@ var AudioManager = (function () {
     activeCharacterSFX.timeoutId = null;
   }
 
+  // PUBLIC: play background music (looping)
+  function playBackgroundMusic(url) {
+    init();
+    // Stop any existing background music
+    stopAndClearSlot('background');
+
+    fetchAndDecode(url).then(function (buffer) {
+      buffers.background = buffer;
+      var toObj = createPlayingSource(buffer, true);
+      if (!toObj.source.buffer) return;
+
+      active.background = toObj;
+      var now = audioCtx.currentTime;
+      var volumeTarget = isMuted ? 0 : 0.5 * masterVolume; // Background music at 50% volume
+      toObj.gain.gain.setValueAtTime(volumeTarget, now);
+      toObj.startTime = now;
+      toObj.source.start(now);
+    }).catch(function (e) {
+      console.error('Failed to load background music:', url, e);
+    });
+  }
+
+  // PUBLIC: stop background music
+  function stopBackgroundMusic() {
+    stopAndClearSlot('background');
+  }
+
   // PUBLIC: play character SFX (with auto-stop previous)
   function playCharacterSFX(url, volume) {
     // Stop any previous character SFX first
@@ -561,6 +590,8 @@ var AudioManager = (function () {
     playSoundEffect: playSoundEffect,
     playCharacterSFX: playCharacterSFX,
     stopCharacterSFX: stopCharacterSFX,
+    playBackgroundMusic: playBackgroundMusic,
+    stopBackgroundMusic: stopBackgroundMusic,
 
     // internals exposed for debugging (optional)
     _audioCtx: function () {

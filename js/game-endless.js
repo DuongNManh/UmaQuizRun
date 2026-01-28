@@ -147,12 +147,12 @@ const GameEndlessResult = {
         // Failure message
         config.ctx.fillStyle = borderColor;
         config.ctx.font = 'bold 20px Arial';
-        config.ctx.fillText('💔 OUT OF LIVES! 💔', textCenterX, boxY + 120);
+        config.ctx.fillText('💔 Hết máu rồi! 💔', textCenterX, boxY + 120);
 
         // Score section
         config.ctx.fillStyle = '#2d3748';
         config.ctx.font = 'bold 24px Arial';
-        config.ctx.fillText('Final Score', textCenterX, boxY + 180);
+        config.ctx.fillText('Điểm cuối cùng', textCenterX, boxY + 180);
 
         config.ctx.fillStyle = borderColor;
         config.ctx.font = 'bold 42px Arial';
@@ -162,11 +162,11 @@ const GameEndlessResult = {
         if (currentScore === highScore) {
             config.ctx.fillStyle = '#4CAF50';
             config.ctx.font = 'bold 18px Arial';
-            config.ctx.fillText('🎉 NEW HIGH SCORE! 🎉', textCenterX, boxY + 270);
+            config.ctx.fillText('🎉 ĐIỂM CAO MỚI! 🎉', textCenterX, boxY + 270);
         } else {
             config.ctx.fillStyle = '#4a5568';
             config.ctx.font = 'bold 18px Arial';
-            config.ctx.fillText(`High Score: ${highScore}`, textCenterX, boxY + 270);
+            config.ctx.fillText(`Điểm cao: ${highScore}`, textCenterX, boxY + 270);
         }
 
         // Character name
@@ -271,6 +271,7 @@ const GameEndless = {
         Game.spawnObstacle();
         lastQuizEnd = Date.now();
         this.setupControls();
+        AudioManager.playBackgroundMusic('sounds/bg-endless.ogg');
         this.loop();
     },
 
@@ -305,7 +306,7 @@ const GameEndless = {
     // Update obstacles for endless mode with heart system
     updateObstaclesEndless() {
         const currentTime = Date.now();
-        if (!isQuizActive && currentTime - lastQuizEnd > OBSTACLE_SPAWN_INTERVAL) {
+        if (!isQuizActive && currentTime - lastQuizEnd > (window.nextObstacleSpawnInterval || OBSTACLE_SPAWN_INTERVAL) && (obstacles.length === 0 || obstacles[obstacles.length - 1].x < config.width - 500)) {
             Game.spawnObstacle();
             lastQuizEnd = currentTime;
         }
@@ -320,9 +321,13 @@ const GameEndless = {
                 currentQuestion = quizData[Math.floor(Math.random() * quizData.length)];
                 isQuizActive = true;
                 isGamePaused = true;
-                slowFactor = 0.2;
                 quizStartTime = currentTime;
-                quizTimer = QUIZ_TIME_LIMIT;
+
+                // Per-question time limit: use duration_in_seconds if provided, else default
+                const durationSeconds = currentQuestion.duration_in_seconds || (QUIZ_TIME_LIMIT / 1000);
+                slowFactor = SLOW_FACTOR_BY_DURATION[durationSeconds] || 0.20;
+                quizTimeLimitMs = durationSeconds * 1000;
+                quizTimer = quizTimeLimitMs;
                 targetObstacle = obstacle; // Mark this as the target to jump
                 obstacle.hasTriggeredQuiz = true; // Mark as triggered to prevent re-triggering
             }
@@ -474,6 +479,7 @@ const GameEndless = {
     showGameOverScreen() {
         config.gameState = 'endlessGameOver';
         obstacles = [];
+        AudioManager.stopBackgroundMusic();
 
         // Initialize result screen
         GameEndlessResult.init();
@@ -520,7 +526,7 @@ const GameEndless = {
         const heartSize = 40;
         const heartSpacing = 50;
         const startX = config.width - (this.maxHearts * heartSpacing) - 20;
-        const startY = 80;
+        const startY = 20;
 
         for (let i = 0; i < this.maxHearts; i++) {
             const x = startX + i * heartSpacing;
@@ -558,6 +564,15 @@ const GameEndless = {
             Quiz.handleClick(e);
         });
 
+        // Hover cursor for quiz answers/input
+        config.canvas.addEventListener('mousemove', (e) => {
+            if (!isQuizActive || !currentQuestion) {
+                config.canvas.style.cursor = 'default';
+                return;
+            }
+            Quiz.handleMouseMove(e);
+        });
+
         document.addEventListener('keydown', (e) => {
             if (config.gameState !== 'playing') return;
 
@@ -581,7 +596,7 @@ const GameEndless = {
     updateQuizEndless() {
         if (isQuizActive) {
             const currentTime = Date.now();
-            quizTimer = QUIZ_TIME_LIMIT - (currentTime - quizStartTime);
+            quizTimer = quizTimeLimitMs - (currentTime - quizStartTime);
             if (quizTimer <= 0) {
                 // Time out - call handleWrongAnswer (will be processed as wrong answer)
                 console.log('Quiz timeout! Counting as wrong answer.');

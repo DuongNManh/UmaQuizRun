@@ -1,6 +1,4 @@
-{
-    "shuffle": true,
-    "questions": [
+[
     {
         "id": 1,
         "type": "MC",
@@ -11,8 +9,7 @@
             "Các quy tắc đạo đức tôn giáo",
             "Sự phát triển của công nghệ"
         ],
-        "correct": 0,
-        "duration_in_seconds": 15
+        "correct": 0
     },
     {
         "id": 2,
@@ -24,8 +21,7 @@
             "Đại hội VII",
             "Đại hội IX"
         ],
-        "correct": 2,
-        "duration_in_seconds": 20
+        "correct": 2
     },
     {
         "id": 3,
@@ -37,8 +33,7 @@
             "Từ năm 1921 - 1930",
             "Từ năm 1930 - 1945"
         ],
-        "correct": 1,
-        "duration_in_seconds": 15
+        "correct": 1
     },
     {
         "id": 4,

@@ -139,19 +139,19 @@ const Game10QuestionsResult = {
         config.ctx.fillStyle = borderColor;
         config.ctx.font = 'bold 36px Arial';
         config.ctx.textAlign = 'center';
-        config.ctx.fillText('QUIZ COMPLETED!', textCenterX, boxY + 80);
+        config.ctx.fillText('HOÀN THÀNH!', textCenterX, boxY + 80);
 
         // Performance message
         let performanceText = '';
         let performanceEmoji = '';
         if (correctAnswers >= 8) {
-            performanceText = 'EXCELLENT!';
+            performanceText = 'XUẤT SẮC!';
             performanceEmoji = '🌟';
         } else if (correctAnswers >= 5) {
-            performanceText = 'GOOD JOB!';
+            performanceText = 'TỐT!';
             performanceEmoji = '🎉';
         } else {
-            performanceText = 'KEEP PRACTICING!';
+            performanceText = 'LUYỆN TẬP THÊM!';
             performanceEmoji = '💪';
         }
 
@@ -162,7 +162,7 @@ const Game10QuestionsResult = {
         // Score section
         config.ctx.fillStyle = '#2d3748';
         config.ctx.font = 'bold 24px Arial';
-        config.ctx.fillText('Your Score', textCenterX, boxY + 180);
+        config.ctx.fillText('Điểm của bạn', textCenterX, boxY + 180);
 
         config.ctx.fillStyle = borderColor;
         config.ctx.font = 'bold 42px Arial';
@@ -172,7 +172,7 @@ const Game10QuestionsResult = {
         const accuracy = Math.round((correctAnswers / 10) * 100);
         config.ctx.fillStyle = '#4a5568';
         config.ctx.font = 'bold 18px Arial';
-        config.ctx.fillText(`Accuracy: ${accuracy}%`, textCenterX, boxY + 270);
+        config.ctx.fillText(`Độ chính xác: ${accuracy}%`, textCenterX, boxY + 270);
 
         // Character name
         const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
@@ -297,6 +297,7 @@ const Game10Questions = {
         Game.spawnObstacle();
         lastQuizEnd = Date.now();
         this.setupControls();
+        AudioManager.playBackgroundMusic('sounds/bg-10question.ogg');
         this.loop();
     },
 
@@ -304,7 +305,7 @@ const Game10Questions = {
     handleCorrectAnswer() {
         this.correctAnswers++;
         hasAnsweredCorrectly = true;
-        currentScore = this.correctAnswers; // Score = number of correct answers
+        currentScore = this.correctAnswers * 10;
 
         console.log(`Correct! Question ${this.currentQuestionNumber}/${this.maxQuestions}, Score: ${this.correctAnswers}`);
         this.nextQuestion();
@@ -382,6 +383,7 @@ const Game10Questions = {
     showResultScreen() {
         config.gameState = '10questionsResult';
         obstacles = [];
+        AudioManager.stopBackgroundMusic();
 
         // Initialize result screen with win animation
         Game10QuestionsResult.init();
@@ -418,7 +420,7 @@ const Game10Questions = {
         config.ctx.fillStyle = '#fff';
         config.ctx.font = 'bold 16px Arial';
         config.ctx.textAlign = 'center';
-        config.ctx.fillText(`Question ${this.currentQuestionNumber}/${this.maxQuestions}`, config.width / 2, barY + barHeight + 25);
+        config.ctx.fillText(`Câu hỏi ${this.currentQuestionNumber - 1}/${this.maxQuestions}`, config.width / 2, barY + barHeight + 25);
 
 
         // Show countdown when ending game
@@ -456,6 +458,15 @@ const Game10Questions = {
         config.canvas.addEventListener('click', (e) => {
             if (!isQuizActive) return;
             Quiz.handleClick(e);
+        });
+
+        // Hover cursor for quiz answers/input
+        config.canvas.addEventListener('mousemove', (e) => {
+            if (!isQuizActive || !currentQuestion) {
+                config.canvas.style.cursor = 'default';
+                return;
+            }
+            Quiz.handleMouseMove(e);
         });
 
         document.addEventListener('keydown', (e) => {
@@ -533,7 +544,7 @@ const Game10Questions = {
         const currentTime = Date.now();
 
         // Only spawn new obstacles if we haven't completed all questions
-        if (!isQuizActive && currentTime - lastQuizEnd > OBSTACLE_SPAWN_INTERVAL && this.questionsAnswered < this.maxQuestions) {
+        if (!isQuizActive && currentTime - lastQuizEnd > (window.nextObstacleSpawnInterval || OBSTACLE_SPAWN_INTERVAL) && this.questionsAnswered < this.maxQuestions && (obstacles.length === 0 || obstacles[obstacles.length - 1].x < config.width - 500)) {
             Game.spawnObstacle();
             lastQuizEnd = currentTime;
         }
@@ -548,9 +559,14 @@ const Game10Questions = {
                 currentQuestion = quizData[Math.floor(Math.random() * quizData.length)];
                 isQuizActive = true;
                 isGamePaused = true;
-                slowFactor = 0.2;
                 quizStartTime = currentTime;
-                quizTimer = QUIZ_TIME_LIMIT;
+                console.log('Quiz time:', currentQuestion.duration_in_seconds || 10);
+
+                // Per-question time limit: use duration_in_seconds if provided, else default
+                const durationSeconds = currentQuestion.duration_in_seconds || 10;
+                slowFactor = SLOW_FACTOR_BY_DURATION[durationSeconds] || 0.20;
+                quizTimeLimitMs = durationSeconds * 1000;
+                quizTimer = quizTimeLimitMs;
                 targetObstacle = obstacle; // Mark this as the target to jump
                 obstacle.hasTriggeredQuiz = true; // Mark as triggered to prevent re-triggering
             }
@@ -588,15 +604,25 @@ const Game10Questions = {
                         AudioManager.playSoundEffect('sounds/fail.ogg', 0.7);
                     }
 
-                    // Check if this is the last question obstacle
-                    if (this.questionsAnswered >= this.maxQuestions && !this.lastObstacleCleared) {
-                        this.lastObstacleCleared = true;
-                        // Small delay to ensure character has visually cleared the obstacle
-                        setTimeout(() => {
-                            this.startEndGameSequence();
-                        }, 500); // 0.5s delay after clearing
-                    }
+                    hasAnsweredCorrectly = false;
+                    hasAnsweredWrong = false;
+                    targetObstacle = null;
+                }
+            }
 
+            // Clear obstacle if character successfully passed it
+            if (obstacle.x < characterConfig.x - 100 && !obstacle.hasBeenProcessed) {
+                obstacle.hasBeenProcessed = true;
+                // Check if this is the last question obstacle
+                if (this.questionsAnswered >= this.maxQuestions && !this.lastObstacleCleared) {
+                    this.lastObstacleCleared = true;
+                    // Small delay to ensure character has visually cleared the obstacle
+                    setTimeout(() => {
+                        this.startEndGameSequence();
+                    }, 500); // 0.5s delay after clearing
+                }
+                // Reset quiz-related flags if this was the target obstacle
+                if (targetObstacle === obstacle) {
                     hasAnsweredCorrectly = false;
                     hasAnsweredWrong = false;
                     targetObstacle = null;
@@ -614,9 +640,9 @@ const Game10Questions = {
     updateQuiz10Q() {
         if (isQuizActive) {
             const currentTime = Date.now();
-            quizTimer = QUIZ_TIME_LIMIT - (currentTime - quizStartTime);
+            quizTimer = quizTimeLimitMs - (currentTime - quizStartTime);
             if (quizTimer <= 0) {
-                // Time out counts as wrong answer, but game continues
+                // Time out counts as wrong answer, but delay popup close to let obstacles move closer
                 console.log('Quiz timeout! Counting as wrong answer.');
                 this.handleWrongAnswer();
             }

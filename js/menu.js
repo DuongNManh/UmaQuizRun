@@ -4,8 +4,8 @@
 const Menu = {
     selectedIndex: 0,
     options: [
-        { text: 'RANDOM 10 QUESTIONS', mode: GAME_MODES.RANDOM_10 },
-        { text: 'ENDLESS MODE', mode: GAME_MODES.ENDLESS }
+        { text: 'Chế độ 10 câu hỏi', mode: GAME_MODES.RANDOM_10 },
+        { text: 'Chế độ vô tận', mode: GAME_MODES.ENDLESS }
     ],
     backgroundImage: null,
     runningCharacters: [],
@@ -98,15 +98,15 @@ const Menu = {
         });
 
         // Title
-        config.ctx.fillStyle = '#fff';
+        config.ctx.fillStyle = '#000000';
         config.ctx.font = 'bold 72px Arial';
         config.ctx.textAlign = 'center';
-        config.ctx.fillText('HCM RUNNER', config.width / 2, 200);
+        config.ctx.fillText('HCMR', config.width / 2, 200);
 
         // Subtitle
-        config.ctx.fillStyle = '#aaa';
+        config.ctx.fillStyle = '#fff';
         config.ctx.font = '24px Arial';
-        config.ctx.fillText('Choose Your Game Mode', config.width / 2, 250);
+        config.ctx.fillText('Chọn chế độ chơi', config.width / 2, 250);
 
         // Menu options
         this.options.forEach((option, index) => {
@@ -139,7 +139,7 @@ const Menu = {
             if (isSelected) {
                 config.ctx.fillStyle = '#FFD700';
                 config.ctx.font = '18px Arial';
-                config.ctx.fillText('▶ PRESS ENTER TO SELECT ◀', config.width / 2, y + 35);
+                config.ctx.fillText('▶ NHẤN ENTER ĐỂ CHỌN ◀', config.width / 2, y + 35);
             }
         });
 
@@ -147,7 +147,7 @@ const Menu = {
         config.ctx.fillStyle = '#fff';
         config.ctx.font = '20px Arial';
         config.ctx.textAlign = 'center';
-        config.ctx.fillText('Use ARROW KEYS to navigate | Press ENTER to continue', config.width / 2, config.height - 50);
+        config.ctx.fillText('Sử dụng phím mũi tên để điều hướng', config.width / 2, config.height - 50);
     },
 
     handleInput(e) {
@@ -169,7 +169,6 @@ const Menu = {
     },
 
     start() {
-        console.log('Starting menu...');
         this.backgroundImage = assets.backgrounds.bgMenu;
         this.lastSpawnTime = Date.now();
 
@@ -220,13 +219,7 @@ const CharacterSelection = {
         config.ctx.fillStyle = '#fff';
         config.ctx.font = 'bold 48px Arial';
         config.ctx.textAlign = 'center';
-        config.ctx.fillText('SELECT YOUR CHARACTER', config.width / 2, 120);
-
-        // Game mode indicator
-        config.ctx.fillStyle = '#4CAF50';
-        config.ctx.font = 'bold 24px Arial';
-        const modeText = currentGameMode === GAME_MODES.RANDOM_10 ? 'RANDOM 10 QUESTIONS MODE' : 'ENDLESS MODE';
-        config.ctx.fillText(modeText, config.width / 2, 160);
+        config.ctx.fillText('LỰA NHÂN VẬT', config.width / 2, 120);
 
         // Main character display area
         const centerX = config.width / 2;
@@ -336,13 +329,13 @@ const CharacterSelection = {
 
         config.ctx.fillStyle = '#fff';
         config.ctx.font = 'bold 24px Arial';
-        config.ctx.fillText('START GAME', centerX, startButtonY + startButtonHeight / 2 + 8);
+        config.ctx.fillText('BẮT ĐẦU CHƠI', centerX, startButtonY + startButtonHeight / 2 + 8);
 
         // Instructions
         config.ctx.fillStyle = '#fff';
         config.ctx.font = '18px Arial';
         config.ctx.textAlign = 'center';
-        config.ctx.fillText('Use LEFT/RIGHT arrows to choose character | Press ENTER to start | ESC to go back', config.width / 2, config.height - 30);
+        config.ctx.fillText('Dùng mũi tên để lựa nhân vật | Enter để bắt đầu', config.width / 2, config.height - 30);
     },
 
     update() {
@@ -504,7 +497,6 @@ const CharacterSelection = {
     },
 
     start() {
-        console.log('All assets loaded! Character selection ready...');
         this.backgroundImage = assets.backgrounds.bgMenu;
 
         document.addEventListener('keydown', this.handleInput.bind(this));
