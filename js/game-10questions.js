@@ -291,6 +291,7 @@ const Game10Questions = {
         characterConfig.paused = false;
         characterConfig.currentAnimation = 'run';
         characterConfig.frameIndex = 0;
+        characterConfig.lastRunningSfxTime = Date.now();
 
         // Spawn first obstacle
         Game.spawnObstacle();
@@ -565,7 +566,8 @@ const Game10Questions = {
                         characterConfig.paused = true;
                         characterConfig.currentAnimation = 'run';
                         characterConfig.frameIndex = 3;
-
+                        // Reset running SFX timing when jumping
+                        characterConfig.lastRunningSfxTime = Date.now();
                         // Play jump and success sound effects
                         const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
                         if (currentChar) {

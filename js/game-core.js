@@ -18,7 +18,10 @@ const characterConfig = {
     jumpVelocity: 100,
     jumpPower: -20,
     gravity: 0.8,
-    paused: false
+    paused: false,
+    // Running SFX timing
+    runningSfxInterval: 1800, // ms between running SFX plays
+    lastRunningSfxTime: 0
 };
 
 // Background scrolling
@@ -107,6 +110,16 @@ const Game = {
                 if (characterConfig.smokeFrameCounter >= effectiveSmokeDelay) {
                     characterConfig.smokeFrameCounter = 0;
                     characterConfig.smokeFrameIndex = (characterConfig.smokeFrameIndex + 1) % SMOKE_FRAME_COUNT;
+                }
+            }
+
+            // Play running SFX when character is running (not jumping, not paused)
+            if (anim === 'run' && !characterConfig.isJumping && !characterConfig.paused) {
+                const currentTime = Date.now();
+                if (currentTime - characterConfig.lastRunningSfxTime > characterConfig.runningSfxInterval) {
+                    AudioManager.playSoundEffect('sounds/running.ogg', 0.1); // Lower volume for background
+                    characterConfig.lastRunningSfxTime = currentTime;
+                    console.log('Playing running SFX'); // Debug log
                 }
             }
         }
@@ -200,6 +213,9 @@ const Game = {
                     characterConfig.paused = true;
                     characterConfig.currentAnimation = 'run';
                     characterConfig.frameIndex = 3;
+
+                    // Reset running SFX timing when jumping
+                    characterConfig.lastRunningSfxTime = Date.now();
 
                     // Play jump and success sound effects
                     const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
