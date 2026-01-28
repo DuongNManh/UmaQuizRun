@@ -24,8 +24,8 @@ function resizeCanvas() {
     // Use "cover" scaling so the game area always fills the canvas,
     // even if it means cropping a bit on one axis. This prevents
     // top/bottom gaps where the body gradient shows through.
-    config.scale = Math.min(config.canvas.width / config.width, config.canvas.height / config.height);
-    
+    config.scale = Math.max(config.canvas.width / config.width, config.canvas.height / config.height);
+
     // Save current transform
     config.ctx.save();
     config.ctx.setTransform(1, 0, 0, 1, 0, 0);

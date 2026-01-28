@@ -107,7 +107,7 @@ const Quiz = {
             const buttonHeight = 100;
             const buttonSpacing = 20;
             const startX = boxX + (boxWidth - 2 * buttonWidth - buttonSpacing) / 2;
-            const startY = boxY + 150;
+            const startY = boxY + 200;
 
             currentQuestion.options.forEach((option, index) => {
                 const col = index % 2;
@@ -129,7 +129,7 @@ const Quiz = {
                 // Button text (wrap long answers inside button)
                 config.ctx.fillStyle = '#fff';
                 config.ctx.font = 'bold 18px Arial';
-            
+
                 config.ctx.textAlign = 'center';
 
                 const optionMaxWidth = buttonWidth - 40; // padding inside button
@@ -212,18 +212,18 @@ const Quiz = {
     // - remove accents (so "doc lap" matches "độc lập")
     // - collapse multiple spaces
     normalizeVietnameseText(text) {
-    if (!text) return '';
+        if (!text) return '';
 
-    let result = text
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // bỏ dấu
-        .replace(/đ/g, 'd')             // map đ
-        .replace(/[^a-z0-9\s]/g, ' ')   // bỏ ký tự đặc biệt
-        .replace(/\s+/g, ' ')           // gộp space
-        .trim();
+        let result = text
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '') // bỏ dấu
+            .replace(/đ/g, 'd')             // map đ
+            .replace(/[^a-z0-9\s]/g, ' ')   // bỏ ký tự đặc biệt
+            .replace(/\s+/g, ' ')           // gộp space
+            .trim();
 
-    return result;
+        return result;
     },
 
     // Handle keyboard input for quiz
@@ -237,7 +237,7 @@ const Quiz = {
             } else if (e.key === 'Backspace') {
                 // Handle backspace - properly remove last character including UTF-8 composed chars
 
-    
+
                 const chars = Array.from(quizInput);
                 quizInput = chars.slice(0, -1).join('');
             } else if (e.key.length === 1 || e.key === 'Dead') {
@@ -324,7 +324,7 @@ const Quiz = {
     checkTextAnswer() {
         const userAnswer = this.normalizeVietnameseText(quizInput);
         const correctAnswer = this.normalizeVietnameseText(currentQuestion.correct);
-        
+
         if (userAnswer === correctAnswer) {
             this.triggerAnswerEffect('correct');
             // Correct answer
@@ -385,6 +385,14 @@ const Quiz = {
 
     // Reset quiz state
     resetQuiz() {
+        // Calculate dynamic spawn interval based on last question's duration
+        if (currentQuestion && currentQuestion.duration_in_seconds) {
+            const distanceToTrigger = config.width + 500 - (characterConfig.x + QUIZ_TRIGGER_DISTANCE);
+            const travelTimeMs = (distanceToTrigger / background.speed) * 1000;
+            const targetTotalTimeMs = currentQuestion.duration_in_seconds * 1000;
+            window.nextObstacleSpawnInterval = Math.max(1000, targetTotalTimeMs - travelTimeMs); // Minimum 1s
+        }
+
         isQuizActive = false;
         isGamePaused = false;
         slowFactor = 1;
@@ -416,10 +424,10 @@ const Quiz = {
 
         if (currentQuestion.type === 'MC') {
             const buttonWidth = 320;
-            const buttonHeight = 80;
+            const buttonHeight = 100;
             const buttonSpacing = 20;
             const startX = boxX + (boxWidth - 2 * buttonWidth - buttonSpacing) / 2;
-            const startY = boxY + 150;
+            const startY = boxY + 200;
 
             currentQuestion.options.forEach((option, index) => {
                 const col = index % 2;
@@ -468,10 +476,10 @@ const Quiz = {
         if (currentQuestion.type === 'MC') {
             // Handle 2x2 grid button clicks
             const buttonWidth = 320;
-            const buttonHeight = 80;
+            const buttonHeight = 100;
             const buttonSpacing = 20;
             const startX = boxX + (boxWidth - 2 * buttonWidth - buttonSpacing) / 2;
-            const startY = boxY + 150;
+            const startY = boxY + 200;
 
             currentQuestion.options.forEach((option, index) => {
                 const col = index % 2;

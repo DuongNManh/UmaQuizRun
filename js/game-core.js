@@ -3,7 +3,7 @@
 // Character sprite configuration
 const characterConfig = {
     currentCharacter: 'spe', // Default character
-    x: 500,
+    x: 300,
     y: 0,
     scale: 2.5,
     currentAnimation: 'run',
@@ -18,7 +18,10 @@ const characterConfig = {
     jumpVelocity: 100,
     jumpPower: -20,
     gravity: 0.8,
-    paused: false
+    paused: false,
+    // Running SFX timing
+    runningSfxInterval: 1800, // ms between running SFX plays
+    lastRunningSfxTime: 0
 };
 
 // Background scrolling
@@ -27,6 +30,10 @@ const background = {
     x2: config.width, // Start second background at right edge for seamless scrolling
     speed: 8
 };
+
+// Dynamic spawn interval based on quiz duration
+let nextObstacleSpawnInterval = OBSTACLE_SPAWN_INTERVAL;
+window.nextObstacleSpawnInterval = nextObstacleSpawnInterval;
 
 const Game = {
     // Draw scrolling background
@@ -109,6 +116,16 @@ const Game = {
                     characterConfig.smokeFrameIndex = (characterConfig.smokeFrameIndex + 1) % SMOKE_FRAME_COUNT;
                 }
             }
+
+            // Play running SFX when character is running (not jumping, not paused)
+            if (anim === 'run' && !characterConfig.isJumping && !characterConfig.paused) {
+                const currentTime = Date.now();
+                if (currentTime - characterConfig.lastRunningSfxTime > characterConfig.runningSfxInterval) {
+                    AudioManager.playSoundEffect('sounds/running.ogg', 0.1); // Lower volume for background
+                    characterConfig.lastRunningSfxTime = currentTime;
+                    console.log('Playing running SFX'); // Debug log
+                }
+            }
         }
     },
 
@@ -133,15 +150,6 @@ const Game = {
         config.ctx.font = '16px Arial';
         config.ctx.fillText(`ĐIỂM CAO: ${highScore}`, 20, 95);
 
-        // Current character info
-        const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
-        config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        config.ctx.fillRect(config.width - 310, 10, 300, 60);
-        config.ctx.fillStyle = '#fff';
-        config.ctx.font = '18px Arial';
-        config.ctx.textAlign = 'left';
-        config.ctx.fillText(`Nhân vật: ${currentChar ? currentChar.name : 'Unknown'}`, config.width - 300, 35);
-
         // Draw any active quiz answer effects on top of UI
         if (typeof Quiz !== 'undefined' && Quiz.drawEffects) {
             Quiz.drawEffects();
@@ -152,7 +160,7 @@ const Game = {
     spawnObstacle() {
         if (assets.backgrounds.fence) {
             obstacles.push({
-                x: config.width,
+                x: config.width + 500,
                 y: config.groundY + (assets.backgrounds.fence.height / 2),
                 speed: background.speed,
                 hasTriggeredQuiz: false
@@ -172,7 +180,7 @@ const Game = {
     // Update obstacles
     updateObstacles() {
         const currentTime = Date.now();
-        if (!isQuizActive && currentTime - lastQuizEnd > OBSTACLE_SPAWN_INTERVAL) {
+        if (!isQuizActive && currentTime - lastQuizEnd > window.nextObstacleSpawnInterval && (obstacles.length === 0 || obstacles[obstacles.length - 1].x < config.width - 500)) {
             this.spawnObstacle();
             lastQuizEnd = currentTime;
         }
@@ -187,11 +195,11 @@ const Game = {
                 currentQuestion = quizData[Math.floor(Math.random() * quizData.length)];
                 isQuizActive = true;
                 isGamePaused = true;
-                slowFactor = 0.2;
                 quizStartTime = currentTime;
 
                 // Per-question time limit: use duration_in_seconds if provided, else default
                 const durationSeconds = currentQuestion.duration_in_seconds || (QUIZ_TIME_LIMIT / 1000);
+                slowFactor = SLOW_FACTOR_BY_DURATION[durationSeconds] || 0.20;
                 quizTimeLimitMs = durationSeconds * 1000;
                 quizTimer = quizTimeLimitMs;
                 targetObstacle = obstacle; // Mark this as the target to jump
@@ -207,6 +215,9 @@ const Game = {
                     characterConfig.paused = true;
                     characterConfig.currentAnimation = 'run';
                     characterConfig.frameIndex = 3;
+
+                    // Reset running SFX timing when jumping
+                    characterConfig.lastRunningSfxTime = Date.now();
 
                     // Play jump and success sound effects
                     const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
@@ -310,14 +321,6 @@ const Game = {
         }
         deltaTime = currentTime - lastFrameTime;
         lastFrameTime = currentTime;
-
-        // FPS counter
-        // frameCount++;
-        // if (currentTime - lastFpsUpdate >= 1000) {
-        //     fps = frameCount;
-        //     frameCount = 0;
-        //     lastFpsUpdate = currentTime;
-        // }
 
         config.ctx.clearRect(0, 0, config.width, config.height);
         this.updateObstacles();

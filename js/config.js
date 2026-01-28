@@ -72,3 +72,10 @@ let lastFpsUpdate = 0;
 let hasAnsweredCorrectly = false; // Flag for correct answer
 let hasAnsweredWrong = false; // Flag for wrong answer
 let targetObstacle = null; // The obstacle to jump over
+
+const SLOW_FACTOR_BY_DURATION = {
+    5: 0.40,
+    10: 0.20,
+    15: 0.13,
+    20: 0.10
+};
