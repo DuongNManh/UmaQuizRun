@@ -3,138 +3,138 @@
 <html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HCM Runner</title>
-    <link rel="icon" type="image/svg+xml" href="/assets/favicon.png" />
-    <style>
-body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* min-height: 100vh; */
-  overflow: hidden;
-}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HCM Runner</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.png" />
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      /* min-height: 100vh; */
+      overflow: hidden;
+    }
 
-/* Animated background orbs for the letterbox area */
-body::before,
-body::after {
-  content: '';
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(40px);
-  opacity: 0.3;
-  animation: float 20s infinite ease-in-out;
-  pointer-events: none;
-  z-index: -1;
-}
+    /* Animated background orbs for the letterbox area */
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.3;
+      animation: float 20s infinite ease-in-out;
+      pointer-events: none;
+      z-index: -1;
+    }
 
-body::before {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, #ff6b9d 0%, #c44569 100%);
-  top: 10%;
-  left: 5%;
-  animation-delay: 0s;
-}
+    body::before {
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, #ff6b9d 0%, #c44569 100%);
+      top: 10%;
+      left: 5%;
+      animation-delay: 0s;
+    }
 
-body::after {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, #4facfe 0%, #00f2fe 100%);
-  bottom: 10%;
-  right: 5%;
-  animation-delay: 10s;
-}
+    body::after {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, #4facfe 0%, #00f2fe 100%);
+      bottom: 10%;
+      right: 5%;
+      animation-delay: 10s;
+    }
 
-@keyframes float {
+    @keyframes float {
 
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
 
-  33% {
-    transform: translate(100px, 100px) scale(1.1);
-  }
+      33% {
+        transform: translate(100px, 100px) scale(1.1);
+      }
 
-  66% {
-    transform: translate(-50px, 150px) scale(0.9);
-  }
-}
+      66% {
+        transform: translate(-50px, 150px) scale(0.9);
+      }
+    }
 
-body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  /* min-height: 100vh; */
-  overflow: hidden;
-}
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      /* min-height: 100vh; */
+      overflow: hidden;
+    }
 
-/* Animated background orbs for the letterbox area */
-body::before,
-body::after {
-  content: '';
-  position: fixed;
-  border-radius: 50%;
-  filter: blur(40px);
-  opacity: 0.3;
-  animation: float 20s infinite ease-in-out;
-  pointer-events: none;
-  z-index: -1;
-}
+    /* Animated background orbs for the letterbox area */
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(40px);
+      opacity: 0.3;
+      animation: float 20s infinite ease-in-out;
+      pointer-events: none;
+      z-index: -1;
+    }
 
-body::before {
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, #ff6b9d 0%, #c44569 100%);
-  top: 10%;
-  left: 5%;
-  animation-delay: 0s;
-}
+    body::before {
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, #ff6b9d 0%, #c44569 100%);
+      top: 10%;
+      left: 5%;
+      animation-delay: 0s;
+    }
 
-body::after {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, #4facfe 0%, #00f2fe 100%);
-  bottom: 10%;
-  right: 5%;
-  animation-delay: 10s;
-}
+    body::after {
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, #4facfe 0%, #00f2fe 100%);
+      bottom: 10%;
+      right: 5%;
+      animation-delay: 10s;
+    }
 
-@keyframes float {
+    @keyframes float {
 
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
 
-  33% {
-    transform: translate(100px, 100px) scale(1.1);
-  }
+      33% {
+        transform: translate(100px, 100px) scale(1.1);
+      }
 
-  66% {
-    transform: translate(-50px, 150px) scale(0.9);
-  }
-}
-    </style>
+      66% {
+        transform: translate(-50px, 150px) scale(0.9);
+      }
+    }
+  </style>
 </head>
 
 <body>
-    <canvas id="game"></canvas>
-    <!-- Load modules in correct order -->
-    <script src="js/config.js"></script>
-    <script src="js/assets.js"></script>
-    <script src="js/audio-manager.js"></script>
-    <script src="js/menu.js"></script>
-    <script src="js/quiz.js"></script>
-    <script src="js/game-endless.js"></script>
-    <script src="js/game-10questions.js"></script>
-    <script src="js/game-core.js"></script>
-    <script src="js/gameStartTransition.js"></script>
-    <script src="js/main.js"></script>
+  <canvas id="game"></canvas>
+  <!-- Load modules in correct order -->
+  <script src="js/config.js"></script>
+  <script src="js/assets.js"></script>
+  <script src="js/audio-manager.js"></script>
+  <script src="js/menu.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/game-endless.js"></script>
+  <script src="js/game-10questions.js"></script>
+  <script src="js/game-core.js"></script>
+  <script src="js/gameStartTransition.js"></script>
+  <script src="js/main.js"></script>
 </body>
 
 </html>
