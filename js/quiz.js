@@ -390,7 +390,7 @@ const Quiz = {
             const distanceToTrigger = config.width + 500 - (characterConfig.x + QUIZ_TRIGGER_DISTANCE);
             const travelTimeMs = (distanceToTrigger / background.speed) * 1000;
             const targetTotalTimeMs = currentQuestion.duration_in_seconds * 1000;
-            window.nextObstacleSpawnInterval = Math.max(1000, targetTotalTimeMs - travelTimeMs); // Minimum 1s
+            window.nextObstacleSpawnInterval = Math.max(3000, targetTotalTimeMs - travelTimeMs);
         }
 
         isQuizActive = false;

@@ -305,6 +305,9 @@ const GameEndless = {
 
     // Update obstacles for endless mode with heart system
     updateObstaclesEndless() {
+
+        console.log('next spamn interval', window.nextObstacleSpawnInterval || OBSTACLE_SPAWN_INTERVAL);
+
         const currentTime = Date.now();
         if (!isQuizActive && currentTime - lastQuizEnd > (window.nextObstacleSpawnInterval || OBSTACLE_SPAWN_INTERVAL) && (obstacles.length === 0 || obstacles[obstacles.length - 1].x < config.width - 500)) {
             Game.spawnObstacle();

@@ -148,10 +148,10 @@ const Game10QuestionsResult = {
             performanceText = 'XUẤT SẮC!';
             performanceEmoji = '🌟';
         } else if (correctAnswers >= 5) {
-            performanceText = 'TỐT!';
+            performanceText = 'HOÀN THÀNH TỐT!';
             performanceEmoji = '🎉';
         } else {
-            performanceText = 'LUYỆN TẬP THÊM!';
+            performanceText = 'CẦN LUYỆN TẬP THÊM!';
             performanceEmoji = '💪';
         }
 
@@ -166,7 +166,7 @@ const Game10QuestionsResult = {
 
         config.ctx.fillStyle = borderColor;
         config.ctx.font = 'bold 42px Arial';
-        config.ctx.fillText(`${correctAnswers}/10`, textCenterX, boxY + 230);
+        config.ctx.fillText(`${currentScore}`, textCenterX, boxY + 230);
 
         // Accuracy percentage
         const accuracy = Math.round((correctAnswers / 10) * 100);
@@ -183,7 +183,6 @@ const Game10QuestionsResult = {
         // Buttons
         const buttonWidth = 150;
         const buttonHeight = 60;
-        const buttonSpacing = 30;
         const menuButtonX = boxX + (boxWidth - buttonWidth) / 2;
         const buttonY = boxY + boxHeight - 120;
 
@@ -272,6 +271,8 @@ const Game10Questions = {
         this.endGameTime = null;
         this.isEndingGame = false;
         this.lastObstacleCleared = false;
+        this.questionIndex = 0;
+        this.shuffledQuestions = [...quizData].sort(() => Math.random() - 0.5);
         currentScore = 0;
 
         // Reset all game state
@@ -321,7 +322,7 @@ const Game10Questions = {
     // Move to next question
     nextQuestion() {
         this.questionsAnswered++;
-        this.currentQuestionNumber = this.currentQuestionNumber >= this.maxQuestions ? this.maxQuestions : this.currentQuestionNumber + 1;
+        this.currentQuestionNumber = this.currentQuestionNumber + 1;
 
         // Always reset quiz state first
         isQuizActive = false;
@@ -437,17 +438,17 @@ const Game10Questions = {
                 config.ctx.fillStyle = '#fff';
                 config.ctx.font = 'bold 48px Arial';
                 config.ctx.textAlign = 'center';
-                config.ctx.fillText('Quiz Completed!', config.width / 2, config.height / 2 - 50);
+                config.ctx.fillText('Hoàn thành màn chơi!', config.width / 2, config.height / 2 - 50);
 
                 // Countdown
                 config.ctx.fillStyle = '#58cc02';
                 config.ctx.font = 'bold 36px Arial';
-                config.ctx.fillText(`Showing results in ${timeLeft}...`, config.width / 2, config.height / 2 + 20);
+                config.ctx.fillText(`Hiển thị kết quả trong ${timeLeft}...`, config.width / 2, config.height / 2 + 20);
 
                 // Score preview
                 config.ctx.fillStyle = '#ff9600';
                 config.ctx.font = 'bold 32px Arial';
-                config.ctx.fillText(`Final Score: ${this.correctAnswers}/${this.maxQuestions}`, config.width / 2, config.height / 2 + 80);
+                config.ctx.fillText(`Điểm cuối cùng: ${currentScore}`, config.width / 2, config.height / 2 + 80);
             }
         }
     },
@@ -556,7 +557,7 @@ const Game10Questions = {
             // Trigger quiz if obstacle is near character and not already jumping or quiz active
             if (obstacle.x < characterConfig.x + QUIZ_TRIGGER_DISTANCE && obstacle.x > characterConfig.x + QUIZ_TRIGGER_DISTANCE - 100 && !characterConfig.isJumping && !isQuizActive && !obstacle.hasTriggeredQuiz && this.questionsAnswered < this.maxQuestions) {
                 // Start quiz
-                currentQuestion = quizData[Math.floor(Math.random() * quizData.length)];
+                currentQuestion = this.shuffledQuestions[this.questionIndex++];
                 isQuizActive = true;
                 isGamePaused = true;
                 quizStartTime = currentTime;

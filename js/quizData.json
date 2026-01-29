@@ -1,113 +1,113 @@
 {
     "shuffle": true,
     "questions": [
-    {
-        "id": 1,
-        "type": "MC",
-        "question": "Theo nguồn tin, khái niệm 'tư tưởng' được định nghĩa là sự phản ánh hiện thực trong ý thức và là biểu hiện của điều gì?",
-        "options": [
-            "Quan hệ của con người với thế giới xung quanh",
-            "Ý chí của một cá nhân kiệt xuất",
-            "Các quy tắc đạo đức tôn giáo",
-            "Sự phát triển của công nghệ"
-        ],
-        "correct": 0,
-        "duration_in_seconds": 15
-    },
-    {
-        "id": 2,
-        "type": "MC",
-        "question": "Đại hội nào của Đảng Cộng sản Việt Nam đã chính thức khẳng định lấy chủ nghĩa Mác-Lênin và tư tưởng Hồ Chí Minh làm nền tảng tư tưởng và kim chỉ nam cho hành động?",
-        "options": [
-            "Đại hội IV",
-            "Đại hội VI",
-            "Đại hội VII",
-            "Đại hội IX"
-        ],
-        "correct": 2,
-        "duration_in_seconds": 20
-    },
-    {
-        "id": 3,
-        "type": "MC",
-        "question": "Thời kỳ nào trong quá trình hình thành tư tưởng Hồ Chí Minh được xác định là thời kỳ 'Tìm thấy con đường cứu nước, giải phóng dân tộc'?",
-        "options": [
-            "Trước năm 1911",
-            "Từ năm 1911 - 1920",
-            "Từ năm 1921 - 1930",
-            "Từ năm 1930 - 1945"
-        ],
-        "correct": 1,
-        "duration_in_seconds": 15
-    },
-    {
-        "id": 4,
-        "type": "MC",
-        "question": "Trong tư tưởng Hồ Chí Minh về lực lượng cách mạng giải phóng dân tộc, giai cấp nào được xác định là 'gốc' của cách mệnh?",
-        "options": [
-            "Trí thức và học sinh",
-            "Tiểu tư sản và thương nhân",
-            "Công nhân và nông dân",
-            "Địa chủ yêu nước"
-        ],
-        "correct": 2
-    },
-    {
-        "id": 5,
-        "type": "MC",
-        "question": "Theo nguồn tài liệu, chuẩn mực đạo đức 'Liêm' theo tư tưởng Hồ Chí Minh có nghĩa là gì?",
-        "options": [
-            "Cần cù, siêng năng trong lao động",
-            "Tiết kiệm, không xa xỉ hoang phí",
-            "Trong sạch, không tham lam",
-            "Thẳng thắn, đứng đắn"
-        ],
-        "correct": 2
-    },
-    {
-        "id": 6,
-        "type": "MC",
-        "question": "Đặc điểm lớn nhất của thời kỳ quá độ lên chủ nghĩa xã hội ở Việt Nam được Hồ Chí Minh xác định là gì?",
-        "options": [
-            "Từ một nước nông nghiệp lạc hậu tiến thẳng lên CNXH không qua giai đoạn TBCN",
-            "Sự tàn phá nặng nề của chiến tranh",
-            "Sự giúp đỡ to lớn của các nước xã hội chủ nghĩa anh em",
-            "Nền kinh tế thị trường phát triển cao"
-        ],
-        "correct": 0
-    },
-    {
-        "id": 7,
-        "type": "MC",
-        "question": "Theo Hồ Chí Minh, yếu tố nào là nền tảng quyết định bản chất cách mạng và khoa học của tư tưởng Hồ Chí Minh?",
-        "options": [
-            "Chủ nghĩa Mác - Lênin",
-            "Văn hóa Nho giáo",
-            "Triết học phương Tây",
-            "Chủ nghĩa Tam dân"
-        ],
-        "correct": 0
-    },
-    {
-        "id": 8,
-        "type": "TI",
-        "question": "Trong bản Tuyên ngôn Độc lập năm 1945, Hồ Chí Minh đã khẳng định một chân lý bất hủ: 'Không có gì quý hơn ... , tự do'. Hãy điền từ còn thiếu vào chỗ trống.",
-        "options": [],
-        "correct": "độc lập"
-    },
-    {
-        "id": 9,
-        "type": "TI",
-        "question": "Điền từ còn thiếu vào câu nói của Hồ Chí Minh về chiến lược trồng người: 'Vì lợi ích mười năm thì phải trồng cây, vì lợi ích trăm năm thì phải ... '.",
-        "options": [],
-        "correct": "trồng người"
-    },
-    {
-        "id": 10,
-        "type": "TI",
-        "question": "Theo Hồ Chí Minh, 'Đạo đức là cái ... của người cách mạng'. Hãy điền từ thích hợp vào chỗ trống.",
-        "options": [],
-        "correct": "gốc"
-    }
+        {
+            "id": 1,
+            "type": "MC",
+            "question": "Theo giáo trình Tư tưởng Hồ Chí Minh, khái niệm 'tư tưởng' được định nghĩa là sự phản ánh hiện thực trong ý thức và là biểu hiện của điều gì?",
+            "options": [
+                "Quan hệ của con người với thế giới xung quanh",
+                "Ý chí của một cá nhân kiệt xuất",
+                "Các quy tắc đạo đức tôn giáo",
+                "Sự phát triển của công nghệ"
+            ],
+            "correct": 0,
+            "duration_in_seconds": 15
+        },
+        {
+            "id": 2,
+            "type": "MC",
+            "question": "Đại hội nào của Đảng Cộng sản Việt Nam đã chính thức khẳng định lấy chủ nghĩa Mác-Lênin và tư tưởng Hồ Chí Minh làm nền tảng tư tưởng và kim chỉ nam cho hành động?",
+            "options": [
+                "Đại hội IV",
+                "Đại hội VI",
+                "Đại hội VII",
+                "Đại hội IX"
+            ],
+            "correct": 2,
+            "duration_in_seconds": 20
+        },
+        {
+            "id": 3,
+            "type": "MC",
+            "question": "Thời kỳ nào trong quá trình hình thành tư tưởng Hồ Chí Minh được xác định là thời kỳ 'Tìm thấy con đường cứu nước, giải phóng dân tộc'?",
+            "options": [
+                "Trước năm 1911",
+                "Từ năm 1911 - 1920",
+                "Từ năm 1921 - 1930",
+                "Từ năm 1930 - 1945"
+            ],
+            "correct": 1,
+            "duration_in_seconds": 15
+        },
+        {
+            "id": 4,
+            "type": "MC",
+            "question": "Trong tư tưởng Hồ Chí Minh về lực lượng cách mạng giải phóng dân tộc, giai cấp nào được xác định là 'gốc' của cách mệnh?",
+            "options": [
+                "Trí thức và học sinh",
+                "Tiểu tư sản và thương nhân",
+                "Công nhân và nông dân",
+                "Địa chủ yêu nước"
+            ],
+            "correct": 2
+        },
+        {
+            "id": 5,
+            "type": "MC",
+            "question": "Chuẩn mực đạo đức 'Liêm' theo tư tưởng Hồ Chí Minh có nghĩa là gì?",
+            "options": [
+                "Cần cù, siêng năng trong lao động",
+                "Tiết kiệm, không xa xỉ hoang phí",
+                "Trong sạch, không tham lam",
+                "Thẳng thắn, đứng đắn"
+            ],
+            "correct": 2
+        },
+        {
+            "id": 6,
+            "type": "MC",
+            "question": "Đặc điểm lớn nhất của thời kỳ quá độ lên chủ nghĩa xã hội ở Việt Nam được Hồ Chí Minh xác định là gì?",
+            "options": [
+                "Từ một nước nông nghiệp lạc hậu tiến thẳng lên CNXH không qua giai đoạn TBCN",
+                "Sự tàn phá nặng nề của chiến tranh",
+                "Sự giúp đỡ to lớn của các nước xã hội chủ nghĩa anh em",
+                "Nền kinh tế thị trường phát triển cao"
+            ],
+            "correct": 0
+        },
+        {
+            "id": 7,
+            "type": "MC",
+            "question": "Theo Hồ Chí Minh, yếu tố nào là nền tảng quyết định bản chất cách mạng và khoa học của tư tưởng Hồ Chí Minh?",
+            "options": [
+                "Chủ nghĩa Mác - Lênin",
+                "Văn hóa Nho giáo",
+                "Triết học phương Tây",
+                "Chủ nghĩa Tam dân"
+            ],
+            "correct": 0
+        },
+        {
+            "id": 8,
+            "type": "TI",
+            "question": "Trong bản Tuyên ngôn Độc lập năm 1945, Hồ Chí Minh đã khẳng định một chân lý bất hủ: 'Không có gì quý hơn ... , tự do'. Hãy điền từ còn thiếu vào chỗ trống.",
+            "options": [],
+            "correct": "độc lập"
+        },
+        {
+            "id": 9,
+            "type": "TI",
+            "question": "Điền từ còn thiếu vào câu nói của Hồ Chí Minh về chiến lược trồng người: 'Vì lợi ích mười năm thì phải trồng cây, vì lợi ích trăm năm thì phải ... '.",
+            "options": [],
+            "correct": "trồng người"
+        },
+        {
+            "id": 10,
+            "type": "TI",
+            "question": "Theo Hồ Chí Minh, 'Đạo đức là cái ... của người cách mạng'. Hãy điền từ thích hợp vào chỗ trống.",
+            "options": [],
+            "correct": "gốc"
+        }
     ]
 }

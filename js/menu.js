@@ -161,6 +161,7 @@ const Menu = {
                 this.selectedIndex = Math.min(this.options.length - 1, this.selectedIndex + 1);
                 break;
             case 'Enter':
+                AudioManager.stopBackgroundMusic();
                 currentGameMode = this.options[this.selectedIndex].mode;
                 config.gameState = 'characterSelect';
                 CharacterSelection.start();
@@ -171,6 +172,9 @@ const Menu = {
     start() {
         this.backgroundImage = assets.backgrounds.bgMenu;
         this.lastSpawnTime = Date.now();
+
+        // Play background music
+        AudioManager.playBackgroundMusic('sounds/bg-menu.ogg', 0.2);
 
         document.addEventListener('keydown', this.handleInput.bind(this));
         this.loop();
