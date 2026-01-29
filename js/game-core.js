@@ -146,10 +146,6 @@ const Game = {
         config.ctx.font = 'bold 28px Arial';
         config.ctx.fillText(`${currentScore}`, 20, 70);
 
-        config.ctx.fillStyle = '#fff';
-        config.ctx.font = '16px Arial';
-        config.ctx.fillText(`ĐIỂM CAO: ${highScore}`, 20, 95);
-
         // Draw any active quiz answer effects on top of UI
         if (typeof Quiz !== 'undefined' && Quiz.drawEffects) {
             Quiz.drawEffects();

@@ -439,7 +439,7 @@ var AudioManager = (function () {
   }
 
   // PUBLIC: play background music (looping)
-  function playBackgroundMusic(url) {
+  function playBackgroundMusic(url, volume) {
     init();
     // Stop any existing background music
     stopAndClearSlot('background');
@@ -451,7 +451,7 @@ var AudioManager = (function () {
 
       active.background = toObj;
       var now = audioCtx.currentTime;
-      var volumeTarget = isMuted ? 0 : 0.5 * masterVolume; // Background music at 50% volume
+      var volumeTarget = isMuted ? 0 : (typeof volume === 'number' ? volume : 0.5) * masterVolume; // Background music at specified volume or 50% by default
       toObj.gain.gain.setValueAtTime(volumeTarget, now);
       toObj.startTime = now;
       toObj.source.start(now);
