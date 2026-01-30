@@ -229,50 +229,51 @@ const HelpUI = {
 
         // Title
         config.ctx.fillStyle = '#fff';
-        config.ctx.font = 'bold 48px Arial';
+        config.ctx.font = 'bold 52px Arial';
         config.ctx.textAlign = 'center';
-        config.ctx.fillText('HƯỚNG DẪN', config.width / 2, 100);
+        config.ctx.fillText('HƯỚNG DẪN', config.width / 2, 120);
 
         // Gameplay explanation
         config.ctx.fillStyle = '#fff';
-        config.ctx.font = '24px Arial';
+        config.ctx.font = 'bold 28px Arial';
         config.ctx.textAlign = 'left';
-        const leftMargin = 100;
-        let yPos = 200;
+        const leftMargin = 120;
+        let yPos = 220;
 
-        yPos += 40;
-        config.ctx.font = '20px Arial';
+        config.ctx.fillText('Gameplay chung:', leftMargin, yPos);
+        yPos += 50;
+        config.ctx.font = '22px Arial';
         config.ctx.fillText('Giúp nhân vật yêu thích vượt qua các chướng ngại vật bằng cách trả lời đúng câu hỏi trắc nghiệm.', leftMargin, yPos);
-        yPos += 60;
+        yPos += 70;
 
-        config.ctx.font = '24px Arial';
+        config.ctx.font = 'bold 28px Arial';
         config.ctx.fillText('Chế độ 10 câu hỏi:', leftMargin, yPos);
-        yPos += 40;
-        config.ctx.font = '20px Arial';
+        yPos += 50;
+        config.ctx.font = '22px Arial';
         config.ctx.fillText('Trả lời đúng 10 câu hỏi để hoàn thành màn chơi.', leftMargin, yPos);
-        yPos += 60;
+        yPos += 70;
 
-        config.ctx.font = '24px Arial';
+        config.ctx.font = 'bold 28px Arial';
         config.ctx.fillText('Chế độ vô tận:', leftMargin, yPos);
-        yPos += 40;
-        config.ctx.font = '20px Arial';
+        yPos += 50;
+        config.ctx.font = '22px Arial';
         config.ctx.fillText('Trả lời liên tục các câu hỏi mà không giới hạn số lượng.', leftMargin, yPos);
-        yPos += 80;
+        yPos += 90;
 
         // Placeholder for image 1
-        const placeholderWidth = 300;
-        const placeholderHeight = 200;
+        const placeholderWidth = 320;
+        const placeholderHeight = 220;
         const placeholder1X = leftMargin;
         const placeholder1Y = yPos;
 
         config.ctx.fillStyle = '#666';
         config.ctx.fillRect(placeholder1X, placeholder1Y, placeholderWidth, placeholderHeight);
         config.ctx.strokeStyle = '#fff';
-        config.ctx.lineWidth = 2;
+        config.ctx.lineWidth = 3;
         config.ctx.strokeRect(placeholder1X, placeholder1Y, placeholderWidth, placeholderHeight);
 
         config.ctx.fillStyle = '#fff';
-        config.ctx.font = '18px Arial';
+        config.ctx.font = '20px Arial';
         config.ctx.textAlign = 'center';
         config.ctx.fillText('Placeholder cho ảnh 1', placeholder1X + placeholderWidth / 2, placeholder1Y + placeholderHeight / 2);
 
@@ -283,19 +284,19 @@ const HelpUI = {
         config.ctx.fillStyle = '#666';
         config.ctx.fillRect(placeholder2X, placeholder2Y, placeholderWidth, placeholderHeight);
         config.ctx.strokeStyle = '#fff';
-        config.ctx.lineWidth = 2;
+        config.ctx.lineWidth = 3;
         config.ctx.strokeRect(placeholder2X, placeholder2Y, placeholderWidth, placeholderHeight);
 
         config.ctx.fillStyle = '#fff';
-        config.ctx.font = '18px Arial';
+        config.ctx.font = '20px Arial';
         config.ctx.textAlign = 'center';
         config.ctx.fillText('Placeholder cho ảnh 2', placeholder2X + placeholderWidth / 2, placeholder2Y + placeholderHeight / 2);
 
         // Instructions to go back
         config.ctx.fillStyle = '#fff';
-        config.ctx.font = '20px Arial';
+        config.ctx.font = '22px Arial';
         config.ctx.textAlign = 'center';
-        config.ctx.fillText('Nhấn ESC để quay lại menu', config.width / 2, config.height - 50);
+        config.ctx.fillText('Nhấn ESC để quay lại menu', config.width / 2, config.height - 60);
     },
 
     handleInput(e) {
