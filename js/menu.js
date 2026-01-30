@@ -5,13 +5,15 @@ const Menu = {
     selectedIndex: 0,
     options: [
         { text: 'Chế độ 10 câu hỏi', mode: GAME_MODES.RANDOM_10 },
-        { text: 'Chế độ vô tận', mode: GAME_MODES.ENDLESS }
+        { text: 'Chế độ vô tận', mode: GAME_MODES.ENDLESS },
+        { text: 'Hướng dẫn', mode: 'help' }
     ],
     backgroundImage: null,
     runningCharacters: [],
     lastSpawnTime: 0,
     spawnInterval: 6000, // 6 seconds
     frameDelay: 150,
+    handleInputBound: null,
 
     update() {
         const currentTime = Date.now();
@@ -162,21 +164,33 @@ const Menu = {
                 break;
             case 'Enter':
                 AudioManager.stopBackgroundMusic();
-                currentGameMode = this.options[this.selectedIndex].mode;
-                config.gameState = 'characterSelect';
-                CharacterSelection.start();
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption.mode === 'help') {
+                    config.gameState = 'help';
+                    HelpUI.start();
+                } else {
+                    currentGameMode = selectedOption.mode;
+                    config.gameState = 'characterSelect';
+                    CharacterSelection.start();
+                }
                 break;
         }
     },
 
     start() {
+        this.selectedIndex = 0; // Reset selection to first option
         this.backgroundImage = assets.backgrounds.bgMenu;
         this.lastSpawnTime = Date.now();
 
         // Play background music
         AudioManager.playBackgroundMusic('sounds/bg-menu.ogg', 0.2);
 
-        document.addEventListener('keydown', this.handleInput.bind(this));
+        // Remove existing listener to avoid duplicates
+        if (this.handleInputBound) {
+            document.removeEventListener('keydown', this.handleInputBound);
+        }
+        this.handleInputBound = this.handleInput.bind(this);
+        document.addEventListener('keydown', this.handleInputBound);
         this.loop();
     },
 
@@ -186,6 +200,124 @@ const Menu = {
             this.draw();
             requestAnimationFrame(this.loop.bind(this));
         } else if (config.gameState === 'characterSelect') {
+            if (this.handleInputBound) {
+                document.removeEventListener('keydown', this.handleInputBound);
+                this.handleInputBound = null;
+            }
+        }
+    }
+};
+
+// Help UI Screen
+const HelpUI = {
+    backgroundImage: null,
+
+    draw() {
+        // Background image
+        if (this.backgroundImage && this.backgroundImage.complete) {
+            config.ctx.drawImage(this.backgroundImage, 0, 0, config.width, config.height);
+            config.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            config.ctx.fillRect(0, 0, config.width, config.height);
+        } else {
+            // Fallback gradient
+            const gradient = config.ctx.createLinearGradient(0, 0, 0, config.height);
+            gradient.addColorStop(0, '#1a1a2e');
+            gradient.addColorStop(1, '#16213e');
+            config.ctx.fillStyle = gradient;
+            config.ctx.fillRect(0, 0, config.width, config.height);
+        }
+
+        // Title
+        config.ctx.fillStyle = '#fff';
+        config.ctx.font = 'bold 48px Arial';
+        config.ctx.textAlign = 'center';
+        config.ctx.fillText('HƯỚNG DẪN', config.width / 2, 100);
+
+        // Gameplay explanation
+        config.ctx.fillStyle = '#fff';
+        config.ctx.font = '24px Arial';
+        config.ctx.textAlign = 'left';
+        const leftMargin = 100;
+        let yPos = 200;
+
+        yPos += 40;
+        config.ctx.font = '20px Arial';
+        config.ctx.fillText('Giúp nhân vật yêu thích vượt qua các chướng ngại vật bằng cách trả lời đúng câu hỏi trắc nghiệm.', leftMargin, yPos);
+        yPos += 60;
+
+        config.ctx.font = '24px Arial';
+        config.ctx.fillText('Chế độ 10 câu hỏi:', leftMargin, yPos);
+        yPos += 40;
+        config.ctx.font = '20px Arial';
+        config.ctx.fillText('Trả lời đúng 10 câu hỏi để hoàn thành màn chơi.', leftMargin, yPos);
+        yPos += 60;
+
+        config.ctx.font = '24px Arial';
+        config.ctx.fillText('Chế độ vô tận:', leftMargin, yPos);
+        yPos += 40;
+        config.ctx.font = '20px Arial';
+        config.ctx.fillText('Trả lời liên tục các câu hỏi mà không giới hạn số lượng.', leftMargin, yPos);
+        yPos += 80;
+
+        // Placeholder for image 1
+        const placeholderWidth = 300;
+        const placeholderHeight = 200;
+        const placeholder1X = leftMargin;
+        const placeholder1Y = yPos;
+
+        config.ctx.fillStyle = '#666';
+        config.ctx.fillRect(placeholder1X, placeholder1Y, placeholderWidth, placeholderHeight);
+        config.ctx.strokeStyle = '#fff';
+        config.ctx.lineWidth = 2;
+        config.ctx.strokeRect(placeholder1X, placeholder1Y, placeholderWidth, placeholderHeight);
+
+        config.ctx.fillStyle = '#fff';
+        config.ctx.font = '18px Arial';
+        config.ctx.textAlign = 'center';
+        config.ctx.fillText('Placeholder cho ảnh 1', placeholder1X + placeholderWidth / 2, placeholder1Y + placeholderHeight / 2);
+
+        // Placeholder for image 2
+        const placeholder2X = config.width - leftMargin - placeholderWidth;
+        const placeholder2Y = yPos;
+
+        config.ctx.fillStyle = '#666';
+        config.ctx.fillRect(placeholder2X, placeholder2Y, placeholderWidth, placeholderHeight);
+        config.ctx.strokeStyle = '#fff';
+        config.ctx.lineWidth = 2;
+        config.ctx.strokeRect(placeholder2X, placeholder2Y, placeholderWidth, placeholderHeight);
+
+        config.ctx.fillStyle = '#fff';
+        config.ctx.font = '18px Arial';
+        config.ctx.textAlign = 'center';
+        config.ctx.fillText('Placeholder cho ảnh 2', placeholder2X + placeholderWidth / 2, placeholder2Y + placeholderHeight / 2);
+
+        // Instructions to go back
+        config.ctx.fillStyle = '#fff';
+        config.ctx.font = '20px Arial';
+        config.ctx.textAlign = 'center';
+        config.ctx.fillText('Nhấn ESC để quay lại menu', config.width / 2, config.height - 50);
+    },
+
+    handleInput(e) {
+        if (config.gameState !== 'help') return;
+
+        if (e.key === 'Escape') {
+            config.gameState = 'menu';
+            Menu.start();
+        }
+    },
+
+    start() {
+        this.backgroundImage = assets.backgrounds.bgMenu;
+        document.addEventListener('keydown', this.handleInput.bind(this));
+        this.loop();
+    },
+
+    loop() {
+        if (config.gameState === 'help') {
+            this.draw();
+            requestAnimationFrame(this.loop.bind(this));
+        } else {
             document.removeEventListener('keydown', this.handleInput.bind(this));
         }
     }
@@ -437,7 +569,7 @@ const CharacterSelection = {
                     clearTimeout(this.sfxTimer);
                     this.sfxTimer = null;
                 }
-                Menu.loop();
+                Menu.start();
                 break;
         }
     },
