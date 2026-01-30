@@ -100,15 +100,22 @@ const Menu = {
         });
 
         // Title
-        config.ctx.fillStyle = '#000000';
-        config.ctx.font = 'bold 72px Arial';
-        config.ctx.textAlign = 'center';
-        config.ctx.fillText('HCMR', config.width / 2, 200);
+        const ctx = config.ctx;
+const x = config.width / 2;
+const y = 200;
 
-        // Subtitle
-        config.ctx.fillStyle = '#fff';
-        config.ctx.font = '24px Arial';
-        config.ctx.fillText('Chọn chế độ chơi', config.width / 2, 250);
+ctx.font = 'bold 72px Arial';
+ctx.textAlign = 'center';
+
+// back layers (depth)
+for (let i = 8; i > 0; i--) {
+    ctx.fillStyle = `rgb(${40 + i*2}, ${40 + i*2}, ${40 + i*2})`;
+    ctx.fillText('HCMR', x + i, y + i);
+}
+
+// front
+ctx.fillStyle = '#fff';
+ctx.fillText('HCMR', x, y);
 
         // Menu options
         this.options.forEach((option, index) => {
@@ -354,7 +361,7 @@ const CharacterSelection = {
 
         // Title
         config.ctx.fillStyle = '#fff';
-        config.ctx.font = 'bold 48px Arial';
+        config.ctx.font = 'bold 64px Arial';
         config.ctx.textAlign = 'center';
         config.ctx.fillText('LỰA NHÂN VẬT', config.width / 2, 120);
 
@@ -409,10 +416,22 @@ const CharacterSelection = {
         }
 
         // Character name
-        config.ctx.fillStyle = '#fff';
-        config.ctx.font = 'bold 32px Arial';
-        config.ctx.textAlign = 'center';
-        config.ctx.fillText(currentChar.name, centerX, centerY - 150);
+        const ctx = config.ctx;
+const x = centerX;
+const y = centerY - 150;
+
+ctx.font = 'bold 48px Arial';
+ctx.textAlign = 'center';
+
+// back layers (depth)
+for (let i = 6; i > 0; i--) {
+    ctx.fillStyle = `rgb(${40 + i * 2}, ${40 + i * 2}, ${40 + i * 2})`;
+    ctx.fillText(currentChar.name, x + i, y + i);
+}
+
+// front
+ctx.fillStyle = '#fff';
+ctx.fillText(currentChar.name, x, y);
 
         // Left arrow button
         const arrowSize = 80;
@@ -537,8 +556,6 @@ const CharacterSelection = {
         // Start game transition instead of going directly to playing
         config.gameState = 'gameStart';
         GameStartTransition.init();
-
-        console.log(`Selected character: ${selectedChar.name} for ${currentGameMode} mode`);
     },
 
     handleInput(e) {

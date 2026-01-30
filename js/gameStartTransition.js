@@ -155,8 +155,8 @@ const GameStartTransition = {
         }
 
         config.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        config.ctx.font = 'bold 32px Arial';
-        config.ctx.fillText('Cùng chiến thắng nào!', config.width / 2, 160);
+        config.ctx.font = 'bold 46px Arial';
+        config.ctx.fillText('Cùng vượt qua thử thách nào!', config.width / 2, 160);
     },
 
     startLoop() {

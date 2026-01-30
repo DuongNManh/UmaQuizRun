@@ -300,25 +300,42 @@ const Quiz = {
     },
 
     drawWrongEffect(elapsed, duration) {
-        const ctx = config.ctx;
-        const progress = elapsed / duration;
-        const intensity = 10 * (1 - progress);
-        const offsetX = Math.sin(elapsed / 60 * Math.PI * 4) * intensity;
+    const ctx = config.ctx;
+    const progress = elapsed / duration;
+    const intensity = 12 * (1 - progress);
+    const offsetX = (Math.random() - 0.5) * intensity;
 
-        const boxWidth = 800;
-        const boxHeight = 250;
-        const boxX = (config.width - boxWidth) / 2;
-        const boxY = (config.height - boxHeight) / 2;
+    const boxWidth = 800;
+    const boxHeight = 250;
+    const boxX = (config.width - boxWidth) / 2;
+    const boxY = (config.height - boxHeight) / 2;
 
-        ctx.save();
-        ctx.translate(offsetX, 0);
-        ctx.strokeStyle = 'rgba(255, 75, 75, 0.9)';
-        ctx.lineWidth = 6;
-        ctx.beginPath();
-        ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 24);
-        ctx.stroke();
-        ctx.restore();
-    },
+    ctx.save();
+    ctx.translate(offsetX, 0);
+
+    // red flash
+    ctx.fillStyle = `rgba(255, 75, 75, ${0.25 * (1 - progress)})`;
+    ctx.beginPath();
+    ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 24);
+    ctx.fill();
+
+    // glow border
+    ctx.shadowColor = 'rgba(255,75,75,0.8)';
+    ctx.shadowBlur = 20;
+    ctx.strokeStyle = 'rgba(255, 75, 75, 0.9)';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    // big X
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255,75,75,0.9)';
+    ctx.font = 'bold 64px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✖', boxX + boxWidth/2, boxY + boxHeight/2);
+
+    ctx.restore();
+},
 
     // Check text input answer
     checkTextAnswer() {

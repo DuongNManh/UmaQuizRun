@@ -134,8 +134,8 @@ const Game = {
         if (config.gameState !== 'playing') return;
 
         // Score display
-        config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        config.ctx.fillRect(50, 50, 250, 150);
+        config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7';
+        config.ctx.fillRect(50, 50, 250, 100);
 
         config.ctx.fillStyle = '#fff';
         config.ctx.font = 'bold 24px Arial';

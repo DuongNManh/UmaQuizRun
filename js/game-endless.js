@@ -509,17 +509,12 @@ const GameEndless = {
             config.ctx.fillStyle = '#fff';
             config.ctx.font = 'bold 48px Arial';
             config.ctx.textAlign = 'center';
-            config.ctx.fillText('Game Over!', config.width / 2, config.height / 2 - 50);
-
-            // Countdown
-            config.ctx.fillStyle = '#ff4757';
-            config.ctx.font = 'bold 36px Arial';
-            config.ctx.fillText(`Showing results in ${timeLeft}...`, config.width / 2, config.height / 2 + 20);
+            config.ctx.fillText('Bạn thua rồi!', config.width / 2, config.height / 2 - 50);
 
             // Score preview
             config.ctx.fillStyle = '#ff9600';
             config.ctx.font = 'bold 32px Arial';
-            config.ctx.fillText(`Final Score: ${currentScore}`, config.width / 2, config.height / 2 + 80);
+            config.ctx.fillText(`Điểm cao: ${currentScore}`, config.width / 2, config.height / 2 + 80);
         }
     },
     drawHeartsUI() {
@@ -528,16 +523,13 @@ const GameEndless = {
         // Hearts display
         const heartSize = 40;
         const heartSpacing = 50;
-        const startX = config.width - (this.maxHearts * heartSpacing) - 20;
-        const startY = 20;
+        const startX = config.width - (this.maxHearts * heartSpacing) - 40;
+        const startY = 50;
 
         for (let i = 0; i < this.maxHearts; i++) {
             const x = startX + i * heartSpacing;
 
-            // Draw heart background
-            config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            config.ctx.fillRect(x - 5, startY - 5, heartSize + 10, heartSize + 10);
-
+          
             // Draw heart - use different symbols for filled vs empty
             config.ctx.font = `${heartSize}px Arial`;
             config.ctx.textAlign = 'center';
@@ -556,7 +548,6 @@ const GameEndless = {
         config.ctx.fillStyle = '#fff';
         config.ctx.font = '16px Arial';
         config.ctx.textAlign = 'left';
-        config.ctx.fillText(`Lives: ${this.hearts}/${this.maxHearts}`, startX - 80, startY + 20);
     },
 
     // Setup controls for endless mode
