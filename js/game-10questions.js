@@ -403,7 +403,7 @@ const Game10Questions = {
         const barWidth = 400;
         const barHeight = 20;
         const barX = (config.width - barWidth) / 2;
-        const barY = 20;
+        const barY = 60;
 
         // Background bar
         config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';

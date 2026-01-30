@@ -135,17 +135,16 @@ const Game = {
 
         // Score display
         config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        config.ctx.fillRect(10, 10, 250, 120);
+        config.ctx.fillRect(50, 50, 250, 150);
 
         config.ctx.fillStyle = '#fff';
         config.ctx.font = 'bold 24px Arial';
         config.ctx.textAlign = 'left';
-        config.ctx.fillText('ĐIỂM HIỆN TẠI', 20, 40);
+        config.ctx.fillText('ĐIỂM HIỆN TẠI', 70, 90);
 
         config.ctx.fillStyle = '#58cc02';
         config.ctx.font = 'bold 28px Arial';
-        config.ctx.fillText(`${currentScore}`, 20, 70);
-
+        config.ctx.fillText(`${currentScore}`, 70, 120);
         // Draw any active quiz answer effects on top of UI
         if (typeof Quiz !== 'undefined' && Quiz.drawEffects) {
             Quiz.drawEffects();

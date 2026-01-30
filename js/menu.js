@@ -514,7 +514,7 @@ const CharacterSelection = {
             const currentChar = CHARACTERS[this.currentCharacterIndex];
             if (currentChar) {
                 const idleSfxPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-idle.ogg`;
-                AudioManager.playCharacterSFX(idleSfxPath, 0.5);
+                AudioManager.playCharacterSFX(idleSfxPath, 0.2);
             }
             this.sfxTimer = null;
         }, this.sfxDelay);
@@ -525,7 +525,7 @@ const CharacterSelection = {
         const currentChar = CHARACTERS[this.currentCharacterIndex];
         if (currentChar) {
             const idleSfxPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-idle.ogg`;
-            AudioManager.playCharacterSFX(idleSfxPath, 0.5);
+            AudioManager.playCharacterSFX(idleSfxPath, 0.2);
         }
     },
 

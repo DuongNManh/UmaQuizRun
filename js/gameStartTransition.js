@@ -57,7 +57,7 @@ const GameStartTransition = {
             const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
             if (currentChar) {
                 const boostSfxPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-boost.ogg`;
-                AudioManager.playSoundEffect(boostSfxPath, 0.7);
+                AudioManager.playSoundEffect(boostSfxPath, 0.4);
             }
             this.hasPlayedBoostSfx = true;
         }
