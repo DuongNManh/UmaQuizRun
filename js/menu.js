@@ -218,6 +218,8 @@ ctx.fillText('HCMR', x, y);
 // Help UI Screen
 const HelpUI = {
     backgroundImage: null,
+    helpImage1: null,
+    helpImage2: null,
 
     draw() {
         // Background image
@@ -268,8 +270,8 @@ const HelpUI = {
         yPos += 90;
 
         // Placeholder for image 1
-        const placeholderWidth = 320;
-        const placeholderHeight = 220;
+        const placeholderWidth = 500;
+        const placeholderHeight = 320;
         const placeholder1X = leftMargin;
         const placeholder1Y = yPos;
 
@@ -279,10 +281,22 @@ const HelpUI = {
         config.ctx.lineWidth = 3;
         config.ctx.strokeRect(placeholder1X, placeholder1Y, placeholderWidth, placeholderHeight);
 
-        config.ctx.fillStyle = '#fff';
-        config.ctx.font = '20px Arial';
-        config.ctx.textAlign = 'center';
-        config.ctx.fillText('Placeholder cho ảnh 1', placeholder1X + placeholderWidth / 2, placeholder1Y + placeholderHeight / 2);
+        // Draw image 1 if loaded, otherwise show placeholder text
+        if (this.helpImage1 && this.helpImage1.complete) {
+            config.ctx.drawImage(
+                this.helpImage1,
+                placeholder1X,
+                placeholder1Y,
+                placeholderWidth,
+                placeholderHeight
+            );
+        } else {
+            config.ctx.fillStyle = '#fff';
+            config.ctx.font = '20px Arial';
+            config.ctx.textAlign = 'center';
+            config.ctx.fillText('Loading...', placeholder1X + placeholderWidth / 2, placeholder1Y + placeholderHeight / 2);
+        }
+
 
         // Placeholder for image 2
         const placeholder2X = config.width - leftMargin - placeholderWidth;
@@ -294,10 +308,21 @@ const HelpUI = {
         config.ctx.lineWidth = 3;
         config.ctx.strokeRect(placeholder2X, placeholder2Y, placeholderWidth, placeholderHeight);
 
-        config.ctx.fillStyle = '#fff';
-        config.ctx.font = '20px Arial';
-        config.ctx.textAlign = 'center';
-        config.ctx.fillText('Placeholder cho ảnh 2', placeholder2X + placeholderWidth / 2, placeholder2Y + placeholderHeight / 2);
+        // Draw image 2 if loaded, otherwise show loading text
+        if (this.helpImage2 && this.helpImage2.complete) {
+            config.ctx.drawImage(
+                this.helpImage2,
+                placeholder2X,
+                placeholder2Y,
+                placeholderWidth,
+                placeholderHeight
+            );
+        } else {
+            config.ctx.fillStyle = '#fff';
+            config.ctx.font = '20px Arial';
+            config.ctx.textAlign = 'center';
+            config.ctx.fillText('Loading...', placeholder2X + placeholderWidth / 2, placeholder2Y + placeholderHeight / 2);
+        }
 
         // Instructions to go back
         config.ctx.fillStyle = '#fff';
@@ -317,6 +342,18 @@ const HelpUI = {
 
     start() {
         this.backgroundImage = assets.backgrounds.bgMenu;
+        
+        // Load help images once
+        if (!this.helpImage1) {
+            this.helpImage1 = new Image();
+            this.helpImage1.src = 'assets/background/ex-1.png';
+        }
+        
+        if (!this.helpImage2) {
+            this.helpImage2 = new Image();
+            this.helpImage2.src = 'assets/background/ex-2.png';
+        }
+        
         document.addEventListener('keydown', this.handleInput.bind(this));
         this.loop();
     },

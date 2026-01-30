@@ -152,22 +152,11 @@ const GameEndlessResult = {
         // Score section
         config.ctx.fillStyle = '#2d3748';
         config.ctx.font = 'bold 24px Arial';
-        config.ctx.fillText('Điểm cuối cùng', textCenterX, boxY + 180);
+        config.ctx.fillText('Điểm của bạn', textCenterX, boxY + 180);
 
         config.ctx.fillStyle = borderColor;
         config.ctx.font = 'bold 42px Arial';
         config.ctx.fillText(`${currentScore}`, textCenterX, boxY + 230);
-
-        // High score comparison
-        if (currentScore === highScore) {
-            config.ctx.fillStyle = '#4CAF50';
-            config.ctx.font = 'bold 18px Arial';
-            config.ctx.fillText('🎉 ĐIỂM CAO MỚI! 🎉', textCenterX, boxY + 270);
-        } else {
-            config.ctx.fillStyle = '#4a5568';
-            config.ctx.font = 'bold 18px Arial';
-            config.ctx.fillText(`Điểm cao: ${highScore}`, textCenterX, boxY + 270);
-        }
 
         // Character name
         const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
