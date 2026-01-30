@@ -399,6 +399,7 @@ const CharacterSelection = {
     selectCharacterAndStart() {
         const selectedChar = CHARACTERS[this.currentCharacterIndex];
         characterConfig.currentCharacter = selectedChar.id;
+        AudioManager.stopCharacterSFX();
 
         // Start game transition instead of going directly to playing
         config.gameState = 'gameStart';
