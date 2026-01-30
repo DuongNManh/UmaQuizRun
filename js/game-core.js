@@ -218,7 +218,7 @@ const Game = {
                     const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
                     if (currentChar) {
                         const jumpSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-jump.ogg`;
-                        AudioManager.playSoundEffect(jumpSoundPath, 0.7);
+                        AudioManager.playSoundEffect(jumpSoundPath, 0.5);
                     }
                     AudioManager.playSoundEffect('sounds/success.ogg', 0.7);
 

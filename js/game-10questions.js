@@ -298,7 +298,7 @@ const Game10Questions = {
         Game.spawnObstacle();
         lastQuizEnd = Date.now();
         this.setupControls();
-        AudioManager.playBackgroundMusic('sounds/bg-10question.ogg');
+        AudioManager.playBackgroundMusic('sounds/bg-10question.ogg', 0.3);
         this.loop();
     },
 
