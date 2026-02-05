@@ -6,8 +6,18 @@ const config = {
     height: 1000,
     scale: 1,
     groundY: 0,
-    gameState: 'loading'
+    gameState: 'loading',
+    gameId: null,
+    userId: null
 };
+
+// Parse URL parameters for tracking
+(function parseURLParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    config.gameId = urlParams.get('gameId');
+    config.userId = urlParams.get('userId');
+    console.log('Game initialized with:', { gameId: config.gameId, userId: config.userId });
+})();
 
 // Game Modes
 const GAME_MODES = {
@@ -62,6 +72,7 @@ let lastQuizEnd = 0;
 let currentScore = 0;
 let highScore = localStorage.getItem('gameHighScore') ? parseInt(localStorage.getItem('gameHighScore')) : 0;
 let quizData = [];
+let gameStartTime = 0; // Track when game session starts for duration calculation
 
 // Game loop variables
 let lastFrameTime = 0;

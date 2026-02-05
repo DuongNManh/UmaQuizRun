@@ -247,6 +247,9 @@ const GameEndless = {
         this.hearts = this.maxHearts;
         this.endGameTime = null;
         this.isEndingGame = false;
+        
+        // Track game start time for duration calculation
+        gameStartTime = Date.now();
 
         // Reset character
         characterConfig.y = config.groundY;
@@ -472,6 +475,19 @@ const GameEndless = {
         config.gameState = 'endlessGameOver';
         obstacles = [];
         AudioManager.stopBackgroundMusic();
+
+        // Calculate duration in seconds
+        const durationInSeconds = Math.floor((Date.now() - gameStartTime) / 1000);
+        
+        // Send tracking data to backend
+        if (config.gameId && config.userId) {
+            GameAPI.trackPlay(
+                config.gameId,
+                config.userId,
+                currentScore,
+                durationInSeconds
+            );
+        }
 
         // Initialize result screen
         GameEndlessResult.init();

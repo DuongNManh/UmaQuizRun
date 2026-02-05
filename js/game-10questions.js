@@ -274,6 +274,9 @@ const Game10Questions = {
         this.questionIndex = 0;
         this.shuffledQuestions = [...quizData].sort(() => Math.random() - 0.5);
         currentScore = 0;
+        
+        // Track game start time for duration calculation
+        gameStartTime = Date.now();
 
         // Reset all game state
         obstacles = [];
@@ -385,6 +388,19 @@ const Game10Questions = {
         config.gameState = '10questionsResult';
         obstacles = [];
         AudioManager.stopBackgroundMusic();
+
+        // Calculate duration in seconds
+        const durationInSeconds = Math.floor((Date.now() - gameStartTime) / 1000);
+        
+        // Send tracking data to backend
+        if (config.gameId && config.userId) {
+            GameAPI.trackPlay(
+                config.gameId,
+                config.userId,
+                currentScore,
+                durationInSeconds
+            );
+        }
 
         // Initialize result screen with win animation
         Game10QuestionsResult.init();
