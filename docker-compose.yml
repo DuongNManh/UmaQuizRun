@@ -2,7 +2,7 @@ version: "3"
 services:
     umaquizrun:
         container_name: umaquizrun
-        image: ghcr.io/DuongNManh/umaquizrun:latest
+        image: ghcr.io/duongnmanh/umaquizrun:latest
         ports:
             - "8081:80"
         restart: always
