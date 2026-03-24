@@ -1,9 +1,9 @@
 services:
-  umaquizrun:
-      container_name: umaquizrun
-      image: lcaohoanq/umaquizrun:latest
-      build:
-          context: .
-          dockerfile: Dockerfile
-      ports:
-          - '8081:80'
+    umaquizrun:
+        container_name: umaquizrun
+        image: ghcr.io/DuongNManh/umaquizrun:latest
+        ports:
+            - "8081:80"
+        deploy:
+            restart_policy:
+                condition: any
