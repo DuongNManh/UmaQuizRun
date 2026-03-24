@@ -101,21 +101,21 @@ const Menu = {
 
         // Title
         const ctx = config.ctx;
-const x = config.width / 2;
-const y = 200;
+        const x = config.width / 2;
+        const y = 200;
 
-ctx.font = 'bold 72px Arial';
-ctx.textAlign = 'center';
+        ctx.font = 'bold 72px Arial';
+        ctx.textAlign = 'center';
 
-// back layers (depth)
-for (let i = 8; i > 0; i--) {
-    ctx.fillStyle = `rgb(${40 + i*2}, ${40 + i*2}, ${40 + i*2})`;
-    ctx.fillText('HCMR', x + i, y + i);
-}
+        // back layers (depth)
+        for (let i = 8; i > 0; i--) {
+            ctx.fillStyle = `rgb(${40 + i * 2}, ${40 + i * 2}, ${40 + i * 2})`;
+            ctx.fillText('UmaQuizRun', x + i, y + i);
+        }
 
-// front
-ctx.fillStyle = '#fff';
-ctx.fillText('HCMR', x, y);
+        // front
+        ctx.fillStyle = '#fff';
+        ctx.fillText('UmaQuizRun', x, y);
 
         // Menu options
         this.options.forEach((option, index) => {
@@ -190,7 +190,7 @@ ctx.fillText('HCMR', x, y);
         this.lastSpawnTime = Date.now();
 
         // Play background music
-        AudioManager.playBackgroundMusic('sounds/bg-menu.ogg', 0.2);
+        AudioManager.playBackgroundMusic('sounds/bg-menu.ogg', 0.5);
 
         // Remove existing listener to avoid duplicates
         if (this.handleInputBound) {
@@ -342,18 +342,18 @@ const HelpUI = {
 
     start() {
         this.backgroundImage = assets.backgrounds.bgMenu;
-        
+
         // Load help images once
         if (!this.helpImage1) {
             this.helpImage1 = new Image();
             this.helpImage1.src = 'assets/background/ex-1.png';
         }
-        
+
         if (!this.helpImage2) {
             this.helpImage2 = new Image();
             this.helpImage2.src = 'assets/background/ex-2.png';
         }
-        
+
         document.addEventListener('keydown', this.handleInput.bind(this));
         this.loop();
     },
@@ -454,21 +454,21 @@ const CharacterSelection = {
 
         // Character name
         const ctx = config.ctx;
-const x = centerX;
-const y = centerY - 150;
+        const x = centerX;
+        const y = centerY - 150;
 
-ctx.font = 'bold 48px Arial';
-ctx.textAlign = 'center';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
 
-// back layers (depth)
-for (let i = 6; i > 0; i--) {
-    ctx.fillStyle = `rgb(${40 + i * 2}, ${40 + i * 2}, ${40 + i * 2})`;
-    ctx.fillText(currentChar.name, x + i, y + i);
-}
+        // back layers (depth)
+        for (let i = 6; i > 0; i--) {
+            ctx.fillStyle = `rgb(${40 + i * 2}, ${40 + i * 2}, ${40 + i * 2})`;
+            ctx.fillText(currentChar.name, x + i, y + i);
+        }
 
-// front
-ctx.fillStyle = '#fff';
-ctx.fillText(currentChar.name, x, y);
+        // front
+        ctx.fillStyle = '#fff';
+        ctx.fillText(currentChar.name, x, y);
 
         // Left arrow button
         const arrowSize = 80;
@@ -500,8 +500,8 @@ ctx.fillText(currentChar.name, x, y);
         config.ctx.fillText('▶', rightArrowX + arrowSize / 2, rightArrowY + arrowSize / 2 + 15);
 
         // Character counter
-        config.ctx.fillStyle = '#aaa';
-        config.ctx.font = '20px Arial';
+        config.ctx.fillStyle = '#636363';
+        config.ctx.font = 'bold 20px Arial';
         config.ctx.textAlign = 'center';
         config.ctx.fillText(`${this.currentCharacterIndex + 1} / ${CHARACTERS.length}`, centerX, centerY + 200);
 

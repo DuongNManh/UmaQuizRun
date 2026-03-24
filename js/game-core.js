@@ -35,6 +35,377 @@ const background = {
 let nextObstacleSpawnInterval = OBSTACLE_SPAWN_INTERVAL;
 window.nextObstacleSpawnInterval = nextObstacleSpawnInterval;
 
+// Shared obstacle logic for both modes
+const ObstacleManager = {
+    spawn() {
+        if (assets.backgrounds.fence) {
+            obstacles.push({
+                x: config.width + 500,
+                y: config.groundY + (assets.backgrounds.fence.height / 2),
+                speed: background.speed,
+                hasTriggeredQuiz: false,
+                hasBeenProcessed: false
+            });
+        }
+    },
+
+    draw() {
+        if (assets.backgrounds.fence) {
+            obstacles.forEach(obstacle => {
+                config.ctx.drawImage(assets.backgrounds.fence, obstacle.x, obstacle.y);
+            });
+        }
+    },
+
+    cleanup() {
+        obstacles = obstacles.filter(obstacle => obstacle.x > -assets.backgrounds.fence.width);
+    }
+};
+
+const QuizManager = {
+    triggerIfNeeded(obstacle, shouldTriggerCallback, getQuestionCallback) {
+        const currentTime = Date.now();
+        if (!obstacle.hasTriggeredQuiz && !characterConfig.isJumping && !isQuizActive && shouldTriggerCallback() && obstacle.x < characterConfig.x + QUIZ_TRIGGER_DISTANCE && obstacle.x > characterConfig.x + QUIZ_TRIGGER_DISTANCE - 100) {
+            currentQuestion = getQuestionCallback ? getQuestionCallback() : quizData[Math.floor(Math.random() * quizData.length)];
+            isQuizActive = true;
+            isGamePaused = true;
+            quizStartTime = currentTime;
+
+            const durationSeconds = currentQuestion.duration_in_seconds || (QUIZ_TIME_LIMIT / 1000);
+            slowFactor = SLOW_FACTOR_BY_DURATION[durationSeconds] || 0.20;
+            quizTimeLimitMs = durationSeconds * 1000;
+            quizTimer = quizTimeLimitMs;
+            targetObstacle = obstacle;
+            obstacle.hasTriggeredQuiz = true;
+        }
+    },
+
+    reset() {
+        isQuizActive = false;
+        isGamePaused = false;
+        slowFactor = 1;
+        currentQuestion = null;
+        quizInput = '';
+        quizTimer = 0;
+        quizTimeLimitMs = QUIZ_TIME_LIMIT;
+        targetObstacle = null;
+    },
+
+    updateTimer(onTimeout) {
+        if (!isQuizActive) return;
+
+        const currentTime = Date.now();
+        quizTimer = quizTimeLimitMs - (currentTime - quizStartTime);
+        if (quizTimer <= 0) {
+            onTimeout?.();
+            this.reset();
+        }
+    }
+};
+
+const UI = {
+    drawScoreBox() {
+        config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        config.ctx.fillRect(50, 50, 250, 100);
+
+        config.ctx.fillStyle = '#fff';
+        config.ctx.font = 'bold 24px Arial';
+        config.ctx.textAlign = 'left';
+        config.ctx.fillText('ĐIỂM HIỆN TẠI', 70, 90);
+
+        config.ctx.fillStyle = '#58cc02';
+        config.ctx.font = 'bold 28px Arial';
+        config.ctx.fillText(`${currentScore}`, 70, 120);
+    },
+
+    drawProgress(current, max) {
+        const barWidth = 400;
+        const barHeight = 20;
+        const barX = (config.width - barWidth) / 2;
+        const barY = 60;
+
+        config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        config.ctx.fillRect(barX - 10, barY - 10, barWidth + 20, barHeight + 40);
+        config.ctx.fillStyle = '#444';
+        config.ctx.fillRect(barX, barY, barWidth, barHeight);
+
+        const progress = current / max;
+        config.ctx.fillStyle = '#4CAF50';
+        config.ctx.fillRect(barX, barY, barWidth * progress, barHeight);
+
+        config.ctx.fillStyle = '#fff';
+        config.ctx.font = 'bold 16px Arial';
+        config.ctx.textAlign = 'center';
+        config.ctx.fillText(`Câu hỏi ${Math.min(current, max)}/${max}`, config.width / 2, barY + barHeight + 25);
+    },
+
+    drawHearts(hearts, maxHearts) {
+        const heartSize = 40;
+        const heartSpacing = 50;
+        const startX = config.width - (maxHearts * heartSpacing) - 40;
+        const startY = 50;
+
+        for (let i = 0; i < maxHearts; i++) {
+            const x = startX + i * heartSpacing;
+            config.ctx.font = `${heartSize}px Arial`;
+            config.ctx.textAlign = 'center';
+            config.ctx.fillStyle = i < hearts ? '#ff0000' : '#8a8a8a';
+            config.ctx.fillText('❤', x, startY + heartSize / 2);
+        }
+    },
+
+    drawResultBox({ borderColor, title, message, score, characterName }) {
+        const boxWidth = 700;
+        const boxHeight = 550;
+        const boxX = (config.width - boxWidth) / 2;
+        const boxY = (config.height - boxHeight) / 2;
+
+        config.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+        config.ctx.fillRect(0, 0, config.width, config.height);
+
+        config.ctx.fillStyle = '#fff';
+        config.ctx.beginPath();
+        config.ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 25);
+        config.ctx.fill();
+
+        config.ctx.strokeStyle = borderColor;
+        config.ctx.lineWidth = 4;
+        config.ctx.stroke();
+
+        const textAreaX = boxX + 250;
+        const textCenterX = textAreaX + (boxWidth - 250) / 2;
+
+        config.ctx.fillStyle = borderColor;
+        config.ctx.font = 'bold 36px Arial';
+        config.ctx.textAlign = 'center';
+        config.ctx.fillText(title, textCenterX, boxY + 80);
+
+        config.ctx.fillStyle = borderColor;
+        config.ctx.font = 'bold 20px Arial';
+        config.ctx.fillText(message, textCenterX, boxY + 120);
+
+        config.ctx.fillStyle = '#2d3748';
+        config.ctx.font = 'bold 24px Arial';
+        config.ctx.fillText('Điểm của bạn', textCenterX, boxY + 180);
+
+        config.ctx.fillStyle = borderColor;
+        config.ctx.font = 'bold 42px Arial';
+        config.ctx.fillText(`${score}`, textCenterX, boxY + 230);
+
+        config.ctx.fillStyle = '#666';
+        config.ctx.font = 'bold 16px Arial';
+        config.ctx.fillText(characterName, textCenterX, boxY + 300);
+
+        const buttonWidth = 150;
+        const buttonHeight = 60;
+        const menuButtonX = boxX + (boxWidth - buttonWidth) / 2;
+        const buttonY = boxY + boxHeight - 120;
+
+        config.ctx.fillStyle = '#4a5568';
+        config.ctx.beginPath();
+        config.ctx.roundRect(menuButtonX, buttonY, buttonWidth, buttonHeight, 15);
+        config.ctx.fill();
+        config.ctx.strokeStyle = '#fff';
+        config.ctx.lineWidth = 2;
+        config.ctx.stroke();
+
+        config.ctx.fillStyle = '#fff';
+        config.ctx.font = 'bold 16px Arial';
+        config.ctx.fillText('MENU', menuButtonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5);
+
+        return { boxX, boxY, boxWidth, boxHeight, menuButtonX, buttonY, buttonWidth, buttonHeight };
+    },
+
+    getResultBoxMetrics() {
+        const boxWidth = 700;
+        const boxHeight = 550;
+        const boxX = (config.width - boxWidth) / 2;
+        const boxY = (config.height - boxHeight) / 2;
+        const buttonWidth = 150;
+        const buttonHeight = 60;
+        const menuButtonX = boxX + (boxWidth - buttonWidth) / 2;
+        const buttonY = boxY + boxHeight - 120;
+
+        return { boxX, boxY, boxWidth, boxHeight, menuButtonX, buttonY, buttonWidth, buttonHeight };
+    }
+};
+
+const ResultScreenFactory = {
+    create({ stateKey, borderColor, title, message, getScore, getCharacterName, getAnimationSprite, animationType, onPlaySound }) {
+        const result = {
+            stateKey,
+            animation: {
+                frameIndex: 0,
+                frameCounter: 0,
+                frameDelay: 20,
+                lastFrameTime: Date.now(),
+                isComplete: false,
+                hasPlayedSound: false
+            },
+            init() {
+                this.animation.frameIndex = 0;
+                this.animation.frameCounter = 0;
+                this.animation.lastFrameTime = Date.now();
+                this.animation.isComplete = false;
+                this.animation.hasPlayedSound = false;
+
+                document.addEventListener('keydown', this.handleInput.bind(this));
+                config.canvas.addEventListener('click', this.handleClick.bind(this));
+            },
+            handleInput(e) {
+                if (config.gameState !== stateKey) return;
+                if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
+                    window.location.reload();
+                }
+            },
+            handleClick(e) {
+                if (config.gameState !== stateKey) return;
+                const rect = config.canvas.getBoundingClientRect();
+                const scaleX = config.canvas.width / rect.width;
+                const scaleY = config.canvas.height / rect.height;
+                const x = (e.clientX - rect.left) * scaleX / config.scale;
+                const y = (e.clientY - rect.top) * scaleY / config.scale;
+                const offsetX = (config.canvas.width / config.scale - config.width) / 2;
+                const offsetY = (config.canvas.height / config.scale - config.height) / 2;
+                const adjustedX = x - offsetX;
+                const adjustedY = y - offsetY;
+
+                const metrics = UI.getResultBoxMetrics();
+
+                if (!metrics) return;
+                if (adjustedX >= metrics.menuButtonX && adjustedX <= metrics.menuButtonX + metrics.buttonWidth && adjustedY >= metrics.buttonY && adjustedY <= metrics.buttonY + metrics.buttonHeight) {
+                    window.location.reload();
+                }
+            },
+            draw() {
+                if (config.gameState !== stateKey) return;
+
+                const score = getScore();
+                const characterName = getCharacterName();
+
+                UI.drawResultBox({
+                    borderColor,
+                    title,
+                    message,
+                    score,
+                    characterName
+                });
+
+                const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
+                const sprite = getAnimationSprite ? getAnimationSprite(currentChar, animationType) : null;
+
+                // Play sound once, at first frame of animation
+                if (!this.animation.hasPlayedSound && onPlaySound) {
+                    if (this.animation.frameIndex === 0) {
+                        onPlaySound(currentChar, score);
+                        this.animation.hasPlayedSound = true;
+                    }
+                }
+
+                if (sprite && sprite.complete) {
+                    const frameHeight = sprite.height;
+                    const frameWidth = frameHeight;
+                    const frameCount = Math.floor(sprite.width / frameWidth);
+
+                    const now = Date.now();
+                    if (!this.animation.isComplete && now - this.animation.lastFrameTime > this.animation.frameDelay * 16) {
+                        this.animation.frameIndex++;
+                        if (this.animation.frameIndex >= frameCount) {
+                            this.animation.frameIndex = frameCount - 1;
+                            this.animation.isComplete = true;
+                        }
+                        this.animation.lastFrameTime = now;
+                    }
+
+                    const boxWidth = 700;
+                    const boxX = (config.width - boxWidth) / 2;
+                    const charSize = 180;
+                    const charX = boxX + 50;
+                    const charY = (config.height / 2) - charSize / 2;
+
+                    if (frameCount > 1) {
+                        config.ctx.drawImage(
+                            sprite,
+                            this.animation.frameIndex * frameWidth,
+                            0,
+                            frameWidth,
+                            frameHeight,
+                            charX,
+                            charY,
+                            charSize,
+                            charSize
+                        );
+                    } else {
+                        config.ctx.drawImage(sprite, charX, charY, charSize, charSize);
+                    }
+                }
+            },
+            loop() {
+                if (config.gameState === stateKey) {
+                    this.draw();
+                    requestAnimationFrame(this.loop.bind(this));
+                }
+            }
+        };
+
+        return result;
+    }
+};
+
+const Game10QuestionsResult = ResultScreenFactory.create({
+    stateKey: '10questionsResult',
+    borderColor: '#58cc02',
+    title: 'HOÀN THÀNH!',
+    message: 'Bạn đã hoàn thành thử thách',
+    getScore: () => currentScore,
+    getCharacterName: () => {
+        const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
+        return currentChar ? currentChar.name : 'Unknown';
+    },
+    getAnimationSprite: (currentChar, animationType) => {
+        if (!currentChar) return null;
+        return assets.characters[currentChar.id]?.win;
+    },
+    onPlaySound: (currentChar, score) => {
+        if (currentChar) {
+            const winSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-win.ogg`;
+            AudioManager.playSoundEffect(winSoundPath, 0.5);
+        }
+
+        // Fallback to generic win sound for reliability
+        AudioManager.playSoundEffect('sounds/success.ogg', 0.7);
+    }
+});
+
+const GameEndlessResult = ResultScreenFactory.create({
+    stateKey: 'endlessGameOver',
+    borderColor: '#ff4b4b',
+    title: 'GAME OVER!',
+    message: 'Hết máu rồi',
+    getScore: () => currentScore,
+    getCharacterName: () => {
+        const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
+        return currentChar ? currentChar.name : 'Unknown';
+    },
+    getAnimationSprite: (currentChar, animationType) => {
+        if (!currentChar) return null;
+        // Use win animation on endless result to mimic pre-refactor behavior
+        return assets.characters[currentChar.id]?.win;
+    },
+    onPlaySound: (currentChar, score) => {
+        if (currentChar) {
+            if (score >= 50) {
+                const winSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-win.ogg`;
+                AudioManager.playSoundEffect(winSoundPath, 0.5);
+            } else {
+                const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
+                AudioManager.playSoundEffect(failSoundPath, 0.5);
+                AudioManager.playSoundEffect('sounds/fail.ogg', 0.7);
+            }
+        }
+    }
+});
+
 const Game = {
     // Draw scrolling background
     drawBackground() {
@@ -121,9 +492,8 @@ const Game = {
             if (anim === 'run' && !characterConfig.isJumping && !characterConfig.paused) {
                 const currentTime = Date.now();
                 if (currentTime - characterConfig.lastRunningSfxTime > characterConfig.runningSfxInterval) {
-                    AudioManager.playSoundEffect('sounds/running.ogg', 0.1); // Lower volume for background
+                    AudioManager.playSoundEffect('sounds/running.ogg', 0.2); // Lower volume for background
                     characterConfig.lastRunningSfxTime = currentTime;
-                    console.log('Playing running SFX'); // Debug log
                 }
             }
         }
@@ -133,18 +503,8 @@ const Game = {
     drawUI() {
         if (config.gameState !== 'playing') return;
 
-        // Score display
-        config.ctx.fillStyle = 'rgba(0, 0, 0, 0.7';
-        config.ctx.fillRect(50, 50, 250, 100);
+        UI.drawScoreBox();
 
-        config.ctx.fillStyle = '#fff';
-        config.ctx.font = 'bold 24px Arial';
-        config.ctx.textAlign = 'left';
-        config.ctx.fillText('ĐIỂM HIỆN TẠI', 70, 90);
-
-        config.ctx.fillStyle = '#58cc02';
-        config.ctx.font = 'bold 28px Arial';
-        config.ctx.fillText(`${currentScore}`, 70, 120);
         // Draw any active quiz answer effects on top of UI
         if (typeof Quiz !== 'undefined' && Quiz.drawEffects) {
             Quiz.drawEffects();
@@ -180,26 +540,11 @@ const Game = {
             lastQuizEnd = currentTime;
         }
 
-        // Move obstacles
         obstacles.forEach(obstacle => {
             obstacle.x -= obstacle.speed * slowFactor * (deltaTime / FIXED_TIME_STEP);
 
-            // Trigger quiz if obstacle is near character and not already jumping or quiz active
-            if (obstacle.x < characterConfig.x + QUIZ_TRIGGER_DISTANCE && obstacle.x > characterConfig.x + QUIZ_TRIGGER_DISTANCE - 100 && !characterConfig.isJumping && !isQuizActive && !obstacle.hasTriggeredQuiz) {
-                // Start quiz
-                currentQuestion = quizData[Math.floor(Math.random() * quizData.length)];
-                isQuizActive = true;
-                isGamePaused = true;
-                quizStartTime = currentTime;
-
-                // Per-question time limit: use duration_in_seconds if provided, else default
-                const durationSeconds = currentQuestion.duration_in_seconds || (QUIZ_TIME_LIMIT / 1000);
-                slowFactor = SLOW_FACTOR_BY_DURATION[durationSeconds] || 0.20;
-                quizTimeLimitMs = durationSeconds * 1000;
-                quizTimer = quizTimeLimitMs;
-                targetObstacle = obstacle; // Mark this as the target to jump
-                obstacle.hasTriggeredQuiz = true; // Mark as triggered to prevent re-triggering
-            }
+            // Reusable quiz trigger path
+            QuizManager.triggerIfNeeded(obstacle, () => true);
 
             // Jump when answered correctly and obstacle is close (but not if answered wrong)
             if (hasAnsweredCorrectly && !hasAnsweredWrong && targetObstacle === obstacle && !characterConfig.isJumping) {
@@ -230,8 +575,6 @@ const Game = {
 
             // Collision detection - if fence reaches character position without jumping -> Game Over
             if (obstacle.x <= characterConfig.x + 100 && obstacle.x >= characterConfig.x - 50 && !characterConfig.isJumping) {
-                console.log('Collision! Game Over.');
-
                 // Play fail sound effects
                 const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
                 if (currentChar) {
@@ -242,19 +585,13 @@ const Game = {
 
                 config.gameState = 'gameOver';
                 obstacles = [];
-                isQuizActive = false;
-                isGamePaused = false;
-                slowFactor = 1;
-                currentQuestion = null;
-                quizInput = '';
+                QuizManager.reset();
                 hasAnsweredCorrectly = false;
                 hasAnsweredWrong = false;
-                targetObstacle = null;
             }
         });
 
-        // Remove off-screen obstacles
-        obstacles = obstacles.filter(obstacle => obstacle.x > -assets.backgrounds.fence.width);
+        ObstacleManager.cleanup();
     },
 
     // Update character (for jumping)
@@ -281,15 +618,6 @@ const Game = {
             const currentTime = Date.now();
             quizTimer = QUIZ_TIME_LIMIT - (currentTime - quizStartTime);
             if (quizTimer <= 0) {
-                // Time out, game over
-                console.log('Quiz timeout! Game Over.');
-
-                // Play fail sound effects
-                // const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
-                // if (currentChar) {
-                //     const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
-                //     AudioManager.playSoundEffect(failSoundPath, 0.7);
-                // }
                 AudioManager.playSoundEffect('sounds/fail.ogg', 0.7);
 
                 // Game over due to timeout

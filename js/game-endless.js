@@ -1,239 +1,10 @@
 // Endless Mode - Game with Hearts System
 // Player has 3 hearts, loses 1 heart per wrong answer, game over when hearts = 0
 
-// Game Over screen module for Endless mode
-const GameEndlessResult = {
-    // Animation configuration
-    animation: {
-        frameIndex: 0,
-        frameCounter: 0,
-        frameDelay: 20, // Slow animation
-        lastFrameTime: 0,
-        isComplete: false,
-        hasPlayedOnce: false,
-        hasPlayedSound: false
-    },
+// Reuse shared result screen from game-core.js
+// GameEndlessResult is created there by ResultScreenFactory
 
-    // Initialize result screen
-    init() {
-        // Reset animation
-        this.animation.frameIndex = 0;
-        this.animation.frameCounter = 0;
-        this.animation.lastFrameTime = Date.now();
-        this.animation.isComplete = false;
-        this.animation.hasPlayedOnce = false;
-        this.animation.hasPlayedSound = false;
-    },
 
-    // Update character animation
-    updateAnimation() {
-        if (this.animation.isComplete) return;
-
-        const currentTime = Date.now();
-        if (currentTime - this.animation.lastFrameTime > this.animation.frameDelay * 16) {
-            const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
-            const sprite = assets.characters[currentChar.id].idle; // Use idle animation for game over
-
-            // Play sound effect only once when animation starts (popup shows)
-            if (this.animation.frameIndex === 0 && !this.animation.hasPlayedSound) {
-                if (currentScore >= 10) {
-                    // Excellent performance - play win sound
-                    if (currentChar) {
-                        const winSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-win.ogg`;
-                        AudioManager.playSoundEffect(winSoundPath, 0.5);
-                    }
-                } else {
-                    // Normal game over - play fail sound
-                    if (currentChar) {
-                        const failSoundPath = `assets/characters/${currentChar.folder}/${currentChar.prefix}-fail.ogg`;
-                        AudioManager.playSoundEffect(failSoundPath, 0.5);
-                    }
-                    AudioManager.playSoundEffect('sounds/fail.ogg', 0.7);
-                }
-                this.animation.hasPlayedSound = true;
-            }
-
-            if (sprite && sprite.complete) {
-                const spriteHeight = sprite.height;
-                const frameWidth = spriteHeight;
-                const frameCount = Math.floor(sprite.width / frameWidth);
-
-                if (frameCount > 1) {
-                    this.animation.frameIndex++;
-                    if (this.animation.frameIndex >= frameCount) {
-                        this.animation.frameIndex = frameCount - 1; // Stay on last frame
-                        this.animation.isComplete = true;
-                        this.animation.hasPlayedOnce = true;
-                    }
-                } else {
-                    this.animation.isComplete = true;
-                    this.animation.hasPlayedOnce = true;
-                }
-
-                this.animation.lastFrameTime = currentTime;
-            }
-        }
-    },
-
-    // Draw character animation
-    drawCharacter() {
-        const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
-        const sprite = assets.characters[currentChar.id].win;
-
-        if (sprite && sprite.complete) {
-            const spriteHeight = sprite.height;
-            const frameWidth = spriteHeight;
-            const frameCount = Math.floor(sprite.width / frameWidth);
-
-            // Character display position (left side of the result box)
-            const charSize = 180;
-            const boxWidth = 700;
-            const boxX = (config.width - boxWidth) / 2;
-            const charX = boxX + 50;
-            const charY = (config.height / 2) - charSize / 2;
-
-            // Draw current frame
-            if (frameCount > 1) {
-                config.ctx.drawImage(
-                    sprite,
-                    this.animation.frameIndex * frameWidth, 0, frameWidth, spriteHeight,
-                    charX, charY, charSize, charSize
-                );
-            } else {
-                config.ctx.drawImage(sprite, charX, charY, charSize, charSize);
-            }
-        }
-    },
-
-    // Draw result screen
-    draw() {
-        // Update animation
-        this.updateAnimation();
-
-        config.ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        config.ctx.fillRect(0, 0, config.width, config.height);
-
-        // Result popup box
-        const boxWidth = 700;
-        const boxHeight = 550;
-        const boxX = (config.width - boxWidth) / 2;
-        const boxY = (config.height - boxHeight) / 2;
-
-        // Box background
-        config.ctx.fillStyle = '#fff';
-        config.ctx.beginPath();
-        config.ctx.roundRect(boxX, boxY, boxWidth, boxHeight, 25);
-        config.ctx.fill();
-
-        // Box border - red for game over
-        const borderColor = '#ff4b4b';
-        config.ctx.strokeStyle = borderColor;
-        config.ctx.lineWidth = 4;
-        config.ctx.stroke();
-
-        // Draw character animation on the left
-        this.drawCharacter();
-
-        // Adjust text positions to account for character on left
-        const textAreaX = boxX + 250;
-        const textCenterX = textAreaX + (boxWidth - 250) / 2;
-
-        // Game Over title
-        config.ctx.fillStyle = borderColor;
-        config.ctx.font = 'bold 36px Arial';
-        config.ctx.textAlign = 'center';
-        config.ctx.fillText('GAME OVER!', textCenterX, boxY + 80);
-
-        // Failure message
-        config.ctx.fillStyle = borderColor;
-        config.ctx.font = 'bold 20px Arial';
-        config.ctx.fillText('💔 Hết máu rồi! 💔', textCenterX, boxY + 120);
-
-        // Score section
-        config.ctx.fillStyle = '#2d3748';
-        config.ctx.font = 'bold 24px Arial';
-        config.ctx.fillText('Điểm của bạn', textCenterX, boxY + 180);
-
-        config.ctx.fillStyle = borderColor;
-        config.ctx.font = 'bold 42px Arial';
-        config.ctx.fillText(`${currentScore}`, textCenterX, boxY + 230);
-
-        // Character name
-        const currentChar = CHARACTERS.find(c => c.id === characterConfig.currentCharacter);
-        config.ctx.fillStyle = '#666';
-        config.ctx.font = 'bold 16px Arial';
-        config.ctx.fillText(currentChar ? currentChar.name : 'Unknown', textCenterX, boxY + 300);
-
-        // Single Menu button (like 10 questions mode)
-        const buttonWidth = 150;
-        const buttonHeight = 60;
-        const menuButtonX = boxX + (boxWidth - buttonWidth) / 2;
-        const buttonY = boxY + boxHeight - 120;
-
-        // Back to Menu button
-        config.ctx.fillStyle = '#4a5568';
-        config.ctx.beginPath();
-        config.ctx.roundRect(menuButtonX, buttonY, buttonWidth, buttonHeight, 15);
-        config.ctx.fill();
-        config.ctx.strokeStyle = '#fff';
-        config.ctx.lineWidth = 2;
-        config.ctx.stroke();
-
-        config.ctx.fillStyle = '#fff';
-        config.ctx.font = 'bold 16px Arial';
-        config.ctx.fillText('MENU', menuButtonX + buttonWidth / 2, buttonY + buttonHeight / 2 + 5);
-    },
-
-    // Handle input
-    handleInput(e) {
-        if (config.gameState !== 'endlessGameOver') return;
-
-        if (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape') {
-            window.location.reload();
-        }
-    },
-
-    // Handle clicks
-    handleClick(e) {
-        if (config.gameState !== 'endlessGameOver') return;
-
-        const rect = config.canvas.getBoundingClientRect();
-        const scaleX = config.canvas.width / rect.width;
-        const scaleY = config.canvas.height / rect.height;
-        const x = (e.clientX - rect.left) * scaleX / config.scale;
-        const y = (e.clientY - rect.top) * scaleY / config.scale;
-
-        // Adjust for translate
-        const offsetX = (config.canvas.width / config.scale - config.width) / 2;
-        const offsetY = (config.canvas.height / config.scale - config.height) / 2;
-        const adjustedX = x - offsetX;
-        const adjustedY = y - offsetY;
-
-        const boxWidth = 700;
-        const boxHeight = 550;
-        const boxX = (config.width - boxWidth) / 2;
-        const boxY = (config.height - boxHeight) / 2;
-
-        const buttonWidth = 150;
-        const buttonHeight = 60;
-        const menuButtonX = boxX + (boxWidth - buttonWidth) / 2; // Center the button
-        const buttonY = boxY + boxHeight - 120;
-
-        // Menu button click detection
-        if (adjustedX >= menuButtonX && adjustedX <= menuButtonX + buttonWidth &&
-            adjustedY >= buttonY && adjustedY <= buttonY + buttonHeight) {
-            window.location.reload(); // Reload the game to reset state
-        }
-    },
-
-    // Result loop
-    loop() {
-        if (config.gameState === 'endlessGameOver') {
-            this.draw();
-            requestAnimationFrame(this.loop.bind(this));
-        }
-    }
-};
 
 const GameEndless = {
     hearts: 3,
@@ -260,7 +31,7 @@ const GameEndless = {
         Game.spawnObstacle();
         lastQuizEnd = Date.now();
         this.setupControls();
-        AudioManager.playBackgroundMusic('sounds/bg-endless.ogg');
+        AudioManager.playBackgroundMusic('sounds/bg-endless.ogg', 0.5);
         this.loop();
     },
 
@@ -295,8 +66,6 @@ const GameEndless = {
     // Update obstacles for endless mode with heart system
     updateObstaclesEndless() {
 
-        console.log('next spamn interval', window.nextObstacleSpawnInterval || OBSTACLE_SPAWN_INTERVAL);
-
         const currentTime = Date.now();
         if (!isQuizActive && currentTime - lastQuizEnd > (window.nextObstacleSpawnInterval || OBSTACLE_SPAWN_INTERVAL) && (obstacles.length === 0 || obstacles[obstacles.length - 1].x < config.width - 500)) {
             Game.spawnObstacle();
@@ -305,24 +74,22 @@ const GameEndless = {
 
         // Move obstacles
         obstacles.forEach(obstacle => {
-            obstacle.x -= obstacle.speed * slowFactor * (deltaTime / FIXED_TIME_STEP);
-
-            // Trigger quiz if obstacle is near character and not already jumping or quiz active
-            if (obstacle.x < characterConfig.x + QUIZ_TRIGGER_DISTANCE && obstacle.x > characterConfig.x + QUIZ_TRIGGER_DISTANCE - 100 && !characterConfig.isJumping && !isQuizActive && !obstacle.hasTriggeredQuiz) {
-                // Start quiz
-                currentQuestion = quizData[Math.floor(Math.random() * quizData.length)];
-                isQuizActive = true;
-                isGamePaused = true;
-                quizStartTime = currentTime;
-
-                // Per-question time limit: use duration_in_seconds if provided, else default
-                const durationSeconds = currentQuestion.duration_in_seconds || (QUIZ_TIME_LIMIT / 1000);
-                slowFactor = SLOW_FACTOR_BY_DURATION[durationSeconds] || 0.20;
-                quizTimeLimitMs = durationSeconds * 1000;
-                quizTimer = quizTimeLimitMs;
-                targetObstacle = obstacle; // Mark this as the target to jump
-                obstacle.hasTriggeredQuiz = true; // Mark as triggered to prevent re-triggering
+            // Maintain sync between quiz timer and target obstacle impact
+            if (isQuizActive && targetObstacle === obstacle) {
+                const elapsed = Date.now() - quizStartTime;
+                const remainingMs = Math.max(1, quizTimeLimitMs - elapsed);
+                const targetX = characterConfig.x + 50; // just in front of character
+                const distance = Math.max(0, obstacle.x - targetX);
+                if (distance > 0) {
+                    const requiredSpeedPerSecond = distance / (remainingMs / 1000);
+                    const speedAdjust = requiredSpeedPerSecond * (deltaTime / 1000);
+                    obstacle.x -= speedAdjust;
+                }
+            } else {
+                obstacle.x -= obstacle.speed * slowFactor * (deltaTime / FIXED_TIME_STEP);
             }
+
+            QuizManager.triggerIfNeeded(obstacle, () => true);
 
             // Jump logic - similar to game-10questions
             if ((hasAnsweredCorrectly || hasAnsweredWrong) && targetObstacle === obstacle && !characterConfig.isJumping) {
@@ -367,7 +134,7 @@ const GameEndless = {
             }
 
             // Collision detection - check if character collides with obstacle
-            if (obstacle.x <= characterConfig.x + 50 && obstacle.x >= characterConfig.x - 50 && !characterConfig.isJumping && !obstacle.hasBeenProcessed) {
+            if (!isQuizActive && obstacle.x <= characterConfig.x + 50 && obstacle.x >= characterConfig.x - 50 && !characterConfig.isJumping && !obstacle.hasBeenProcessed) {
                 console.log('Collision detected! Character did not jump over obstacle.');
                 obstacle.hasBeenProcessed = true; // Mark to prevent multiple processing
 
@@ -395,7 +162,7 @@ const GameEndless = {
         });
 
         // Remove off-screen obstacles
-        obstacles = obstacles.filter(obstacle => obstacle.x > -assets.backgrounds.fence.width);
+        ObstacleManager.cleanup();
     },
 
     // Start endless game mode (legacy method - calls init)
@@ -475,10 +242,6 @@ const GameEndless = {
 
         // Initialize result screen
         GameEndlessResult.init();
-
-        // Setup result screen controls
-        document.addEventListener('keydown', GameEndlessResult.handleInput.bind(GameEndlessResult));
-        config.canvas.addEventListener('click', GameEndlessResult.handleClick.bind(GameEndlessResult));
         GameEndlessResult.loop();
     },
 
@@ -503,40 +266,12 @@ const GameEndless = {
             // Score preview
             config.ctx.fillStyle = '#ff9600';
             config.ctx.font = 'bold 32px Arial';
-            config.ctx.fillText(`Điểm cao: ${currentScore}`, config.width / 2, config.height / 2 + 80);
+            config.ctx.fillText(`Điểm: ${currentScore}`, config.width / 2, config.height / 2 + 80);
         }
     },
     drawHeartsUI() {
         if (config.gameState !== 'playing') return;
-
-        // Hearts display
-        const heartSize = 40;
-        const heartSpacing = 50;
-        const startX = config.width - (this.maxHearts * heartSpacing) - 40;
-        const startY = 50;
-
-        for (let i = 0; i < this.maxHearts; i++) {
-            const x = startX + i * heartSpacing;
-
-          
-            // Draw heart - use different symbols for filled vs empty
-            config.ctx.font = `${heartSize}px Arial`;
-            config.ctx.textAlign = 'center';
-            if (i < this.hearts) {
-                // Filled heart - red
-                config.ctx.fillStyle = '#ff4757';
-                config.ctx.fillText('❤️', x + heartSize / 2, startY + heartSize - 5);
-            } else {
-                // Empty heart - gray outline
-                config.ctx.fillStyle = '#666';
-                config.ctx.fillText('🤍', x + heartSize / 2, startY + heartSize - 5);
-            }
-        }
-
-        // Hearts label with current count
-        config.ctx.fillStyle = '#fff';
-        config.ctx.font = '16px Arial';
-        config.ctx.textAlign = 'left';
+        UI.drawHearts(this.hearts, this.maxHearts);
     },
 
     // Setup controls for endless mode
