@@ -1,9 +1,8 @@
+version: "3"
 services:
     umaquizrun:
         container_name: umaquizrun
         image: ghcr.io/DuongNManh/umaquizrun:latest
         ports:
             - "8081:80"
-        deploy:
-            restart_policy:
-                condition: any
+        restart: always
